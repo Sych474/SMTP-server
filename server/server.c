@@ -1,112 +1,182 @@
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <sys/socket.h>
-#include <sys/types.h>
-#include <netinet/in.h>
-#include <netinet/tcp.h>
-#include <libgen.h>
-#include <unistd.h>
+#include "server.h"
 
-#define BUFFER_SIZE 1024
-#define on_error(...) { fprintf(stderr, __VA_ARGS__); fflush(stderr); exit(1); }
+//internal functions 
+int bind_server_fd(int port); 
+int add_new_client(server_t *server);
+int recv_from_client(server_t *server, int client_id);
+int send_to_client(server_t *server, int client_id);
 
-
-void debug_print(char* message, int message_len)
+server_t *server_init(int port) 
 {
-    printf("MSG: %s [%d]\n",message, message_len);
+    server_t* server = (server_t*) malloc(sizeof(server_t));
+
+    if (server == NULL) {
+        printf("Can not allocate memory for server!");
+        return NULL;
+    }
+
+    int server_fd = bind_server_fd(port);
+    if (server_fd < 0) {
+        free(server);
+        printf("Can not create or bind socket for server with port: %d\n", port); 
+        return NULL; 
+    }
+
+    server_fill_pollin_fd(server, POLL_FDS_SERVER, server_fd);
+    server->fds_cnt = 1;
+
+    return server;
 }
 
-int main (int argc, char *argv[]) {
-    if (argc < 2) 
-        on_error("Usage: %s [port]\n", argv[0]);
+int server_start(server_t *server, int port)
+{
+    if (listen(server->fds[POLL_FDS_SERVER].fd, SOMAXCONN) < 0) {
+        printf("Can not listen on server socket!\n");
+        return -1; 
+    }
 
-    int port = atoi(argv[1]);
+    printf("Server is listening on %d!\n", port);
+    printf("%d\n", server->fds_cnt);
+    int run = 1; // TODO add corect exit using cmd
+    while(run)
+    {
+        int res = poll(server->fds, server->fds_cnt, TIMEOUT); 
 
-    int server_fd, client_fd;
-    struct sockaddr_in server, client;
-    char buf[BUFFER_SIZE];
-    char message[BUFFER_SIZE];
-    int message_size = 0; 
-    char *keystring = "exit";
-    int keystring_len = strlen(keystring);
+        switch (res)
+        {
+            case POLL_EXPIRE:
+				break;                                                    
 
-    server_fd = socket(AF_INET, SOCK_STREAM, 0);
-    if (server_fd < 0) 
-        on_error("Could not create socket\n");
+			case POLL_ERR:
 
-    server.sin_family = AF_INET;
-    server.sin_port = htons(port);
-    server.sin_addr.s_addr = htonl(INADDR_ANY);
+				printf("Error on poll");
+                run = 0;
+                break; 
 
-    int opt_val = 1;
-    if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &opt_val, sizeof opt_val) < 0)
-        on_error("setsockopt\n");
+			default:
+                if (server->fds[POLL_FDS_SERVER].revents & POLLIN) {
+                    server->fds[POLL_FDS_SERVER].revents = 0;
+                    
+                    if (add_new_client(server) != 0) {
+                        printf("Can not add new client!");
+                        run = 0;
+                        break;
+                    }
+                }
 
-    if (bind(server_fd, (struct sockaddr *) &server, sizeof(server)) < 0)
-        on_error("Could not bind socket\n");
-
-    if (listen(server_fd, 128) < 0)
-        on_error("Could not listen on socket\n");
-
-    printf("Server is listening on %d\n", port);
-
-    while (1) {
-        socklen_t client_len = sizeof(client);
-        client_fd = accept(server_fd, (struct sockaddr *) &client, &client_len);
-
-        if (client_fd < 0) 
-            on_error("Could not establish new connection\n");
-
-        while(1) {
-            memset(buf, 0, BUFFER_SIZE);
-            int read = recv(client_fd, buf, BUFFER_SIZE, 0);
-
-            if (!read)
-                break;
-
-            if (read < 0) 
-                on_error("Client read failed\n");
-
-            int real_read = read;
-
-            char* key_position = strstr(buf,keystring);
-            if (key_position == NULL)
-            {
-                // no end keyword
-                memcpy(message + message_size, buf, real_read);
-                message_size += real_read;
-                debug_print(message, message_size);       
-            }
-            else 
-            {
-                // have end keyword
-                int end_len = key_position - buf;
-                memcpy(message + message_size, buf, end_len);
-                message_size += end_len;
-                message[message_size] = '\n';
-                message_size++; 
-                printf("END FOUND, send Data:\n");
-                debug_print(message, message_size);       
-                
-                if (send(client_fd, message, message_size, 0) < 0) 
-                    on_error("Client write failed\n");
-
-                memset(message,0, BUFFER_SIZE);
-                message_size = 0;
-                
-                
-                char* next_message_start_ptr = key_position + keystring_len;
-                int next_message_len = strlen(next_message_start_ptr);
-                memcpy(message, next_message_start_ptr, next_message_len);
-                message_size = next_message_len; 
-                message[message_size] = '\n';
-                message_size++; 
-                printf("START NEW MESSAGE:\n");
-                debug_print(message, message_size); 
-            }
+                // process clients
+                for (int i = POLL_FDS_CLIENTS_FIRST; i < server->fds_cnt; i++)
+                {
+                    if (server->fds[i].revents & POLLIN) {
+                        // process input from client
+                        if (recv_from_client(server, i) > 0)
+                            printf("Successfully received message from client %d\n", i);
+                        else 
+                            printf("Error on receiving message from client %d\n", i);   
+                    }
+                    if (server->fds[i].revents & POLLOUT) {
+                        // process output to client 
+                        if (send_to_client(server, i) > 0)
+                            printf("Successfully send message to client %d\n", i);
+                        else 
+                            printf("Successfully sending message to client %d\n", i);  
+                    }
+                }
         }
     }
 
+    return 0; 
+}
+
+int add_new_client(server_t *server)
+{
+    int client_fd = accept(server->fds[POLL_FDS_SERVER].fd, NULL, 0);
+    if (client_fd < 0) {
+        printf("Can not accept client fd!");
+        return client_fd;
+    }
+
+    server_fill_pollin_fd(server, server->fds_cnt, client_fd);
+    printf("New client (%d) accepted!\n", server->fds_cnt);
+
+    server->fds_cnt++;
+
     return 0;
+}
+
+int recv_from_client(server_t *server, int client_id) 
+{
+    char buf[BUFFER_SIZE]; 
+    int received = recv(server->fds[client_id].fd, buf, BUFFER_SIZE, 0);
+
+    if (received > 0) {
+        // TODO process multiple input with searching end keyword
+        memcpy(server->client_infos[client_id].message, buf, received); 
+        
+        printf("Client %d, received: %s \n", client_id, server->client_infos[client_id].message);
+
+        //set socket to output mode
+        server->fds[client_id].events = POLLOUT;
+        server->fds[client_id].revents = 0;
+    } 
+
+    return received;
+}
+
+int send_to_client(server_t *server, int client_id)
+{
+    // TODO add bufferizig for messages (if message len is larger then BUFFER_SIZE)
+    char buf[BUFFER_SIZE]; 
+    memcpy(buf, server->client_infos[client_id].message, BUFFER_SIZE); 
+
+    int send_len = send(server->fds[client_id].fd, buf, strlen(buf), 0);
+
+    if (send_len > 0) {
+        //clear mesage 
+        memset(server->client_infos[client_id].message, 0, MAX_MESSAGE_SIZE);
+
+        //set socket to listen mode
+        server->fds[client_id].events = POLLIN;
+        server->fds[client_id].revents = 0;
+    }
+
+    return send_len;
+}
+
+
+void server_fill_pollin_fd(server_t *server, int index, int fd) {
+    server->fds[index].fd = fd;
+    server->fds[index].events = POLLIN;
+    server->fds[index].revents = 0;
+}
+
+int bind_server_fd(int port) {
+
+    struct sockaddr_in addr;  
+    int server_fd;
+    int option = 1; // Option for SO_REUSEADDR
+    int res; // res for setsockopt and bind
+    
+    server_fd = socket(AF_INET, SOCK_STREAM, 0);
+    if (server_fd < 0) 
+        return server_fd; 
+
+    res = setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &option, sizeof option);
+    if (res < 0) {
+        close(server_fd);
+        return res; 
+    }
+
+    memset(&addr, 0, sizeof(struct sockaddr_in)); 
+    addr.sin_family = AF_INET;
+    addr.sin_port = htons(port);
+    addr.sin_addr.s_addr = htonl(INADDR_ANY);
+
+    res = bind(server_fd, (struct sockaddr *) &addr, sizeof(addr));
+    if (res < 0) {
+        close(server_fd);
+        return res;
+    }
+
+    return server_fd;
 }
