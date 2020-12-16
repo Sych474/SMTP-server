@@ -26,9 +26,8 @@ int main (int argc, char *argv[]) {
         on_error("error on starting server\n");      
     
     server_start(server, port); 
-    printf("exit\n");
-    
-    close(signal_fd);
+    server_stop(server);
+    printf("Stopped\n");
     free(server);
     return 0;
 }

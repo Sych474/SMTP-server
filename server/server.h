@@ -49,6 +49,7 @@ typedef struct server_struct {
 
 server_t *server_init(int port, int signal_fd); 
 int server_start(server_t *server, int port);
+void server_stop(server_t *server);
 
 void server_fill_pollin_fd(server_t *server, int index, int fd);
 

@@ -103,6 +103,12 @@ int server_start(server_t *server, int port)
     return 0; 
 }
 
+void server_stop(server_t *server)
+{
+    for (int i = 0; i < server->fds_cnt; i++)
+        close(server->fds[i].fd);
+}
+
 int add_new_client(server_t *server)
 {
     int client_fd = accept(server->fds[POLL_FDS_SERVER].fd, NULL, 0);
