@@ -3,6 +3,7 @@
 //internal functions 
 int bind_server_fd(int port); 
 int add_new_client(server_t *server);
+int close_connection_with_client(server_t *server, int client_id);
 int recv_from_client(server_t *server, int client_id);
 int send_to_client(server_t *server, int client_id);
 
@@ -84,8 +85,11 @@ int server_start(server_t *server, int port)
                 {
                     if (server->fds[i].revents & POLLIN) {
                         // process input from client
-                        if (recv_from_client(server, i) > 0)
+                        int res = recv_from_client(server, i);
+                        if (res > 0)
                             printf("Successfully received message from client %d\n", i);
+                        else if (res == 0)
+                            printf("Client %d closed connection\n", i);
                         else 
                             printf("Error on receiving message from client %d\n", i);   
                     }
@@ -130,6 +134,9 @@ int recv_from_client(server_t *server, int client_id)
     char buf[BUFFER_SIZE]; 
     int received = recv(server->fds[client_id].fd, buf, BUFFER_SIZE, 0);
 
+    if (received == 0)
+        return close_connection_with_client(server, client_id);
+
     if (received > 0) {
         // TODO process multiple input with searching end keyword
         memcpy(server->client_infos[client_id].message, buf, received); 
@@ -162,6 +169,17 @@ int send_to_client(server_t *server, int client_id)
     }
 
     return send_len;
+}
+
+int close_connection_with_client(server_t *server, int client_id) {
+    int res = close(server->fds[client_id].fd);
+
+    server->fds_cnt--;
+    for (int i = client_id; i < server->fds_cnt; i++) {
+        server->fds[i] = server->fds[i+1];
+        server->client_infos[i] = server->client_infos[i-1]; 
+    }    
+    return res;
 }
 
 
