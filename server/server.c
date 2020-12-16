@@ -6,7 +6,7 @@ int add_new_client(server_t *server);
 int recv_from_client(server_t *server, int client_id);
 int send_to_client(server_t *server, int client_id);
 
-server_t *server_init(int port) 
+server_t *server_init(int port, int signal_fd) 
 {
     server_t* server = (server_t*) malloc(sizeof(server_t));
 
@@ -22,8 +22,9 @@ server_t *server_init(int port)
         return NULL; 
     }
 
+    server_fill_pollin_fd(server, POLL_FDS_SIGNAL, signal_fd);
     server_fill_pollin_fd(server, POLL_FDS_SERVER, server_fd);
-    server->fds_cnt = 1;
+    server->fds_cnt = 2;
 
     return server;
 }
@@ -47,13 +48,19 @@ int server_start(server_t *server, int port)
             case POLL_EXPIRE:
 				break;                                                    
 
-			case POLL_ERR:
+			case POLL_ERROR:
 
 				printf("Error on poll");
                 run = 0;
                 break; 
 
 			default:
+                if (server->fds[POLL_FDS_SIGNAL].revents & POLLIN) {
+                    server->fds[POLL_FDS_SIGNAL].revents = 0;
+                    // Process exit signal 
+                    run = 0; 
+                }
+
                 if (server->fds[POLL_FDS_SERVER].revents & POLLIN) {
                     server->fds[POLL_FDS_SERVER].revents = 0;
                     
