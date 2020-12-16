@@ -11,7 +11,7 @@ server_t *server_init(int port, int signal_fd)
     server_t* server = (server_t*) malloc(sizeof(server_t));
 
     if (server == NULL) {
-        printf("Can not allocate memory for server!");
+        printf("Can not allocate memory for server!\n");
         return NULL;
     }
 
@@ -49,8 +49,7 @@ int server_start(server_t *server, int port)
 				break;                                                    
 
 			case POLL_ERROR:
-
-				printf("Error on poll");
+				printf("Error on poll\n");
                 run = 0;
                 break; 
 
@@ -58,14 +57,23 @@ int server_start(server_t *server, int port)
                 if (server->fds[POLL_FDS_SIGNAL].revents & POLLIN) {
                     server->fds[POLL_FDS_SIGNAL].revents = 0;
                     // Process exit signal 
-                    run = 0; 
+
+                    struct signalfd_siginfo sig_fd;
+                    ssize_t s;
+                    s = read(server->fds[POLL_FDS_SIGNAL].fd, &sig_fd, sizeof(sig_fd));
+                    if (s == sizeof(sig_fd) && sig_fd.ssi_signo == SIGINT) {
+                        printf("\n\nGot SIGINT\n");
+                        printf("Stopping...\n");
+                        run = 0; 
+                    }
+                    break;
                 }
 
                 if (server->fds[POLL_FDS_SERVER].revents & POLLIN) {
                     server->fds[POLL_FDS_SERVER].revents = 0;
                     
                     if (add_new_client(server) != 0) {
-                        printf("Can not add new client!");
+                        printf("Can not add new client!\n");
                         run = 0;
                         break;
                     }

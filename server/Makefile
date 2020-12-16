@@ -1,7 +1,7 @@
 compile_flags := -g -g3 -O0
 source_dirs  := .
 version := -std=c99
-cflags:= -Wall -Werror -pedantic
+cflags:= -Wall -Werror -pedantic -D_GNU_SOURCE
 
 build_dir := build
 source_dirs      := $(addprefix ../,$(source_dirs))
