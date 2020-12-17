@@ -6,6 +6,7 @@
 #include "server.h"
 
 #define on_error(...) { fprintf(stderr, __VA_ARGS__); fflush(stderr); exit(1); }
+#define LOG_FILE_NAME "log.log"
 
 int create_signal_fd();
 
@@ -20,15 +21,23 @@ int main (int argc, char *argv[]) {
     if (signal_fd < 0)
         on_error("Error on creating signal fd!\n");
 
-    server_t* server = server_init(port, signal_fd);
+    logger_t *logger = logger_init(LOG_FILE_NAME);
+    if (logger == NULL)
+        on_error("Error on creating logger!\n");
+
+    server_t* server = server_init(port, signal_fd, logger);
 
     if (server == NULL)
         on_error("error on starting server\n");      
     
     server_start(server, port); 
+    
     server_stop(server);
-    printf("Stopped\n");
+    log_info(logger, "Server stopped");
+    
+    logger_stop(logger);
     free(server);
+    free(logger);
     return 0;
 }
 

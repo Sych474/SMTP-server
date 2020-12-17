@@ -1,5 +1,5 @@
 compile_flags := -g -g3 -O0
-source_dirs  := .
+source_dirs  := . ../common/logger
 version := -std=c99
 cflags:= -Wall -Werror -pedantic -D_GNU_SOURCE
 

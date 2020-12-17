@@ -7,19 +7,21 @@ int close_connection_with_client(server_t *server, int client_id);
 int recv_from_client(server_t *server, int client_id);
 int send_to_client(server_t *server, int client_id);
 
-server_t *server_init(int port, int signal_fd) 
+server_t *server_init(int port, int signal_fd, logger_t *logger) 
 {
     server_t* server = (server_t*) malloc(sizeof(server_t));
 
     if (server == NULL) {
-        printf("Can not allocate memory for server!\n");
+        log_error(logger, "Can not allocate memory for server!");
         return NULL;
     }
+
+    server->logger = logger; 
 
     int server_fd = bind_server_fd(port);
     if (server_fd < 0) {
         free(server);
-        printf("Can not create or bind socket for server with port: %d\n", port); 
+        log_error(logger, "Can not create or bind socket for server with port: %d", port); 
         return NULL; 
     }
 
@@ -33,13 +35,13 @@ server_t *server_init(int port, int signal_fd)
 int server_start(server_t *server, int port)
 {
     if (listen(server->fds[POLL_FDS_SERVER].fd, SOMAXCONN) < 0) {
-        printf("Can not listen on server socket!\n");
+        log_error(server->logger, "Can not listen on server socket!");
         return -1; 
     }
 
-    printf("Server is listening on %d!\n", port);
-    printf("%d\n", server->fds_cnt);
-    int run = 1; // TODO add corect exit using cmd
+    log_info(server->logger, "Server is listening on %d!", port);
+
+    int run = 1;
     while(run)
     {
         int res = poll(server->fds, server->fds_cnt, TIMEOUT); 
@@ -50,7 +52,7 @@ int server_start(server_t *server, int port)
 				break;                                                    
 
 			case POLL_ERROR:
-				printf("Error on poll\n");
+				log_error(server->logger, "Error on poll");
                 run = 0;
                 break; 
 
@@ -63,8 +65,7 @@ int server_start(server_t *server, int port)
                     ssize_t s;
                     s = read(server->fds[POLL_FDS_SIGNAL].fd, &sig_fd, sizeof(sig_fd));
                     if (s == sizeof(sig_fd) && sig_fd.ssi_signo == SIGINT) {
-                        printf("\n\nGot SIGINT\n");
-                        printf("Stopping...\n");
+                        log_info(server->logger, "Stopping server...");
                         run = 0; 
                     }
                     break;
@@ -74,7 +75,7 @@ int server_start(server_t *server, int port)
                     server->fds[POLL_FDS_SERVER].revents = 0;
                     
                     if (add_new_client(server) != 0) {
-                        printf("Can not add new client!\n");
+                        log_error(server->logger, "Can not add new client!");
                         run = 0;
                         break;
                     }
@@ -87,18 +88,18 @@ int server_start(server_t *server, int port)
                         // process input from client
                         int res = recv_from_client(server, i);
                         if (res > 0)
-                            printf("Successfully received message from client %d\n", i);
+                            log_debug(server->logger, "Successfully received message from client %d", i);
                         else if (res == 0)
-                            printf("Client %d closed connection\n", i);
+                            log_info(server->logger, "Client %d closed connection", i);
                         else 
-                            printf("Error on receiving message from client %d\n", i);   
+                            log_error(server->logger, "Error on receiving message from client %d", i);   
                     }
                     if (server->fds[i].revents & POLLOUT) {
                         // process output to client 
                         if (send_to_client(server, i) > 0)
-                            printf("Successfully send message to client %d\n", i);
+                            log_debug(server->logger, "Successfully send message to client %d", i);
                         else 
-                            printf("Successfully sending message to client %d\n", i);  
+                            log_error(server->logger, "Error on sending message to client %d", i);  
                     }
                 }
         }
@@ -117,12 +118,12 @@ int add_new_client(server_t *server)
 {
     int client_fd = accept(server->fds[POLL_FDS_SERVER].fd, NULL, 0);
     if (client_fd < 0) {
-        printf("Can not accept client fd!");
+        log_error(server->logger, "Can not accept client fd!");
         return client_fd;
     }
 
     server_fill_pollin_fd(server, server->fds_cnt, client_fd);
-    printf("New client (%d) accepted!\n", server->fds_cnt);
+    log_info(server->logger, "New client (%d) accepted!", server->fds_cnt);
 
     server->fds_cnt++;
 
@@ -141,7 +142,7 @@ int recv_from_client(server_t *server, int client_id)
         // TODO process multiple input with searching end keyword
         memcpy(server->client_infos[client_id].message, buf, received); 
         
-        printf("Client %d, received: %s \n", client_id, server->client_infos[client_id].message);
+        log_debug(server->logger, "Client %d, received: %s", client_id, server->client_infos[client_id].message);
 
         //set socket to output mode
         server->fds[client_id].events = POLLOUT;

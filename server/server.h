@@ -20,6 +20,8 @@
 #include <netinet/tcp.h>
 #include <arpa/inet.h>
 
+#include "../common/logger/logger.h"
+
 #define BUFFER_SIZE             1024
 #define MAX_MESSAGE_SIZE        1024
 #define POLL_MAX_CNT            256
@@ -44,10 +46,11 @@ typedef struct server_struct {
     struct pollfd fds[POLL_MAX_CNT]; 
     int fds_cnt; 
     client_info_t client_infos[POLL_MAX_CNT];
+    logger_t *logger; 
 
 } server_t;
 
-server_t *server_init(int port, int signal_fd); 
+server_t *server_init(int port, int signal_fd, logger_t *logger); 
 int server_start(server_t *server, int port);
 void server_stop(server_t *server);
 
