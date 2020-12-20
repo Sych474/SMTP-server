@@ -7,6 +7,11 @@ int close_connection_with_client(server_t *server, int client_id);
 int recv_from_client(server_t *server, int client_id);
 int send_to_client(server_t *server, int client_id);
 
+void set_pollin_fd(server_t *server, int index, int fd);
+void set_empty_fd(server_t *server, int index);
+
+int get_empty_fd_index(server_t *server);
+
 server_t *server_init(int port, int signal_fd, logger_t *logger) 
 {
     server_t* server = (server_t*) malloc(sizeof(server_t));
@@ -25,10 +30,12 @@ server_t *server_init(int port, int signal_fd, logger_t *logger)
         return NULL; 
     }
 
-    server_fill_pollin_fd(server, POLL_FDS_SIGNAL, signal_fd);
-    server_fill_pollin_fd(server, POLL_FDS_SERVER, server_fd);
-    server->fds_cnt = 2;
+    for (int i = 0; i < POLL_MAX_CNT; i++)
+        set_empty_fd(server, i);
 
+    set_pollin_fd(server, POLL_FDS_SIGNAL, signal_fd);
+    set_pollin_fd(server, POLL_FDS_SERVER, server_fd);
+    
     return server;
 }
 
@@ -44,7 +51,7 @@ int server_start(server_t *server, int port)
     int run = 1;
     while(run)
     {
-        int res = poll(server->fds, server->fds_cnt, TIMEOUT); 
+        int res = poll(server->fds, POLL_MAX_CNT, TIMEOUT); 
 
         switch (res)
         {
@@ -82,7 +89,7 @@ int server_start(server_t *server, int port)
                 }
 
                 // process clients
-                for (int i = POLL_FDS_CLIENTS_FIRST; i < server->fds_cnt; i++)
+                for (int i = POLL_FDS_CLIENTS_FIRST; i < POLL_MAX_CNT; i++)
                 {
                     if (server->fds[i].revents & POLLIN) {
                         // process input from client
@@ -92,7 +99,8 @@ int server_start(server_t *server, int port)
                         else if (res == 0)
                             log_info(server->logger, "Client %d closed connection", i);
                         else 
-                            log_error(server->logger, "Error on receiving message from client %d", i);   
+                            log_error(server->logger, "Error on receiving message from client %d", i);  
+                        break; 
                     }
                     if (server->fds[i].revents & POLLOUT) {
                         // process output to client 
@@ -100,6 +108,7 @@ int server_start(server_t *server, int port)
                             log_debug(server->logger, "Successfully send message to client %d", i);
                         else 
                             log_error(server->logger, "Error on sending message to client %d", i);  
+                        break;
                     }
                 }
         }
@@ -110,8 +119,9 @@ int server_start(server_t *server, int port)
 
 void server_stop(server_t *server)
 {
-    for (int i = 0; i < server->fds_cnt; i++)
-        close(server->fds[i].fd);
+    for (int i = 0; i < POLL_MAX_CNT; i++)
+        if (server->fds[i].fd != 0)
+            close(server->fds[i].fd);
 }
 
 int add_new_client(server_t *server)
@@ -121,11 +131,11 @@ int add_new_client(server_t *server)
         log_error(server->logger, "Can not accept client fd!");
         return client_fd;
     }
+    
+    int client_id = get_empty_fd_index(server);
 
-    server_fill_pollin_fd(server, server->fds_cnt, client_fd);
-    log_info(server->logger, "New client (%d) accepted!", server->fds_cnt);
-
-    server->fds_cnt++;
+    set_pollin_fd(server, client_id, client_fd);
+    log_info(server->logger, "New client (%d) accepted!", client_id);
 
     return 0;
 }
@@ -175,19 +185,29 @@ int send_to_client(server_t *server, int client_id)
 int close_connection_with_client(server_t *server, int client_id) {
     int res = close(server->fds[client_id].fd);
 
-    server->fds_cnt--;
-    for (int i = client_id; i < server->fds_cnt; i++) {
-        server->fds[i] = server->fds[i+1];
-        server->client_infos[i] = server->client_infos[i-1]; 
-    }    
+    set_empty_fd(server, client_id);
+
     return res;
 }
 
 
-void server_fill_pollin_fd(server_t *server, int index, int fd) {
+void set_pollin_fd(server_t *server, int index, int fd) {
     server->fds[index].fd = fd;
     server->fds[index].events = POLLIN;
     server->fds[index].revents = 0;
+}
+
+void set_empty_fd(server_t *server, int index) {
+    server->fds[index].fd = 0;
+    server->fds[index].events = 0;
+    server->fds[index].revents = 0;
+}
+
+int get_empty_fd_index(server_t *server) {
+    int i = 0;
+    for (; i < POLL_MAX_CNT && server->fds[i].fd; i++);
+
+    return i; 
 }
 
 int bind_server_fd(int port) {

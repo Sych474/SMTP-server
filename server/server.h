@@ -44,17 +44,12 @@ typedef struct client_info_struct {
 typedef struct server_struct {    
 
     struct pollfd fds[POLL_MAX_CNT]; 
-    int fds_cnt; 
     client_info_t client_infos[POLL_MAX_CNT];
     logger_t *logger; 
-
 } server_t;
 
 server_t *server_init(int port, int signal_fd, logger_t *logger); 
 int server_start(server_t *server, int port);
 void server_stop(server_t *server);
-
-void server_fill_pollin_fd(server_t *server, int index, int fd);
-
 
 #endif
