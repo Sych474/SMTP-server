@@ -31,6 +31,7 @@ typedef struct logger_struct
 {
     FILE *fd; 
     int mq;
+    int logger_process_pid;
 } logger_t;
 
 typedef struct logger_mq_msg_struct 

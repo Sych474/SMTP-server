@@ -28,13 +28,12 @@ int main (int argc, char *argv[]) {
     server_t* server = server_init(port, signal_fd, logger);
 
     if (server == NULL)
-        on_error("error on starting server\n");      
+        on_error("error on starting server.\n");      
     
     server_start(server, port); 
-    
+
     server_stop(server);
-    log_info(logger, "Server stopped");
-    
+    log_info(logger, "Server stopped.");
     logger_stop(logger);
     free(server);
     free(logger);

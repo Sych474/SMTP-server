@@ -1,6 +1,7 @@
 #include "logger.h"
 
 void logger_child_process(const char *log_filename, int mq);
+void logger_finalize(logger_t *logger);
 
 logger_t *logger_init(const char *log_filename)
 {
@@ -44,7 +45,7 @@ logger_t *logger_init(const char *log_filename)
 
         logger->mq = mq; 
         logger->fd = NULL; //not need for this process, so, not init it.
-
+        logger->logger_process_pid = pid;
         printf("Logger: Ready. \n");
         return logger;
     }
@@ -52,17 +53,15 @@ logger_t *logger_init(const char *log_filename)
 }
 
 void logger_stop(logger_t *logger){
+    
     logger_mq_msg_t msg; 
     msg.msg_type = LOGGER_MQ_MSG_TYPE_EXIT; 
     
     if (msgsnd(logger->mq, &msg, sizeof(msg.msg_payload), 0) < 0) {
-        //TODO error 
-    }
-
-    //wait for logger exit;
-    if (msgrcv(logger->mq, &msg, sizeof(msg.msg_payload), LOGGER_MQ_MSG_TYPE_EXIT, 0) < 0) {
-        //TODO error 
-    }
+        printf("Error on sending exit message to logger!\n");
+        kill(logger->logger_process_pid, SIGTERM);
+    }    
+    sleep(1); // wait for logger
 }
 
 void logger_child_process(const char *log_filename, int mq)
@@ -97,10 +96,8 @@ void logger_child_process(const char *log_filename, int mq)
         switch (msg.msg_type)
         {
         case LOGGER_MQ_MSG_TYPE_EXIT:
-            printf("Logger: Exiting on signal.\n");
+            printf("Logger: Receive exit signal...\n");
             run = 0;
-            msg.msg_type = LOGGER_MQ_MSG_TYPE_EXIT;
-            msgsnd(logger.mq, &msg, sizeof(msg.msg_payload), 0);
             break;
 
         case LOGGER_MQ_MSG_TYPE_LOG:
@@ -114,8 +111,10 @@ void logger_child_process(const char *log_filename, int mq)
             break;
         }
     }
-    printf("Logger: stopping logger.\n");
-    fclose(logger.fd);   
+    
+    printf("Logger: stopping logger...\n");
+    logger_finalize(&logger);
+    printf("Logger: stopped.\n");
 }
 
 
@@ -163,4 +162,12 @@ void log_debug(logger_t *logger, const char *format, ...)
     va_start(vl, format);
     log_message(logger, DEBUG_PREFIX, format, vl);
     va_end(vl);
+}
+
+void logger_finalize(logger_t *logger) 
+{
+    msgctl(logger->mq, IPC_RMID, NULL);
+    
+    if (logger->fd != NULL)
+        fclose(logger->fd);   
 }
