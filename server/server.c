@@ -56,7 +56,7 @@ int server_start(server_t *server, int port)
     int run = 1;
     while(run)
     {
-        int res = poll(server->fds, POLL_FDS_COUNT, 1000); 
+        int res = poll(server->fds, POLL_FDS_COUNT, POLL_TIMEOUT); 
         switch (res)
         {
             case POLL_EXPIRE:
@@ -106,6 +106,7 @@ int master_process(server_t *server)
         if (!pid) {
             // worker
             server->is_master = 0; 
+            set_empty_fd(server->fds, POLL_FDS_SERVER);
         } else {
             // master
             set_empty_fd(server->fds, POLL_FDS_CLIENT); 
