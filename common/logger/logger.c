@@ -61,7 +61,7 @@ void logger_stop(logger_t *logger){
         printf("Error on sending exit message to logger!\n");
         kill(logger->logger_process_pid, SIGTERM);
     }    
-    sleep(1); // wait for logger
+    wait(NULL); // wait for logger
 }
 
 void logger_child_process(const char *log_filename, int mq)

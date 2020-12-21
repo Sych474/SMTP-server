@@ -15,6 +15,7 @@
 #include <sys/poll.h>
 #include <signal.h>
 #include <sys/signalfd.h>
+#include <sys/mman.h>
 
 #include <netinet/in.h>
 #include <netinet/tcp.h>
@@ -22,16 +23,20 @@
 
 #include "../common/logger/logger.h"
 
+#define SERVER_WORKERS_COUNT    4
+
 #define BUFFER_SIZE             1024
 #define MAX_MESSAGE_SIZE        1024
-#define POLL_MAX_CNT            256
-#define TIMEOUT                 10
+
+#define POLL_FDS_COUNT           3
+#define POLL_TIMEOUT             10
 
 #define POLL_ERROR              -1
 #define POLL_EXPIRE             0
-#define POLL_FDS_SIGNAL         0
-#define POLL_FDS_SERVER         1
-#define POLL_FDS_CLIENTS_FIRST  2
+#define POLL_FDS_SERVER         0
+#define POLL_FDS_SIGNAL         1
+#define POLL_FDS_CLIENT         2
+#define POLL_WORKER_START       1
 
 #define END_SIGNAL              "exit"
 
@@ -43,13 +48,13 @@ typedef struct client_info_struct {
 
 typedef struct server_struct {    
 
-    struct pollfd fds[POLL_MAX_CNT]; 
-    client_info_t client_infos[POLL_MAX_CNT];
     logger_t *logger; 
+    struct pollfd fds[POLL_FDS_COUNT]; 
+    client_info_t client_info;
+    int is_master;
 } server_t;
 
 server_t *server_init(int port, int signal_fd, logger_t *logger); 
 int server_start(server_t *server, int port);
-void server_stop(server_t *server);
 
 #endif

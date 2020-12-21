@@ -31,12 +31,13 @@ int main (int argc, char *argv[]) {
         on_error("error on starting server.\n");      
     
     server_start(server, port); 
-
-    server_stop(server);
-    log_info(logger, "Server stopped.");
-    logger_stop(logger);
+    if (server->is_master)
+    {
+        log_info(logger, "Server stopped.");
+        logger_stop(logger);
+        free(logger);
+    }
     free(server);
-    free(logger);
     return 0;
 }
 

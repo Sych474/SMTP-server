@@ -10,6 +10,7 @@
 #include <sys/ipc.h>
 #include <sys/msg.h>
 #include <sys/types.h>
+#include <sys/wait.h> 
 #include <stdarg.h>
 
 #define INFO_PREFIX "[INFO]"
