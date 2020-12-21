@@ -15,6 +15,8 @@ void set_pollin_fd(struct pollfd* fds, int index, int fd);
 int recv_from_client(server_t *server);
 int send_to_client(server_t *server);
 
+int check_timeout(server_t *server);
+
 
 server_t *server_init(int port, int signal_fd, logger_t *logger) 
 {
@@ -27,7 +29,6 @@ server_t *server_init(int port, int signal_fd, logger_t *logger)
 
     server->logger = logger; 
     server->is_master = 1;
-    server->clients_cnt = 0;
 
     int server_fd = bind_server_fd(port);
     if (server_fd < 0) {
@@ -76,7 +77,7 @@ int server_start(server_t *server, int port)
                     ssize_t s;
                     s = read(server->fds[POLL_FDS_SIGNAL].fd, &sig_fd, sizeof(sig_fd));
                     if (s == sizeof(sig_fd) && sig_fd.ssi_signo == SIGINT) {
-                        log_info(server->logger, "[WORKER] Stopping server...");
+                        log_info(server->logger, "[WORKER %d] Stopping server...", getpid());
                         run = 0; 
                     }
                     break;
@@ -88,6 +89,8 @@ int server_start(server_t *server, int port)
                     run = worker_process(server);
                 break;
         }
+        if (!server->is_master)
+            run = check_timeout(server);
     }
     server_stop(server);
     return 0;
@@ -106,9 +109,11 @@ int master_process(server_t *server)
         if (!pid) {
             // worker
             server->is_master = 0; 
+            server->client_info.last_message_time = time(NULL);
             set_empty_fd(server->fds, POLL_FDS_SERVER);
         } else {
             // master
+            close(server->fds[POLL_FDS_CLIENT].fd);
             set_empty_fd(server->fds, POLL_FDS_CLIENT); 
             log_info(server->logger, "[MASTER] New client accepted and will be processed by worker with pid: %d.", pid);
         }
@@ -193,6 +198,7 @@ int recv_from_client(server_t *server)
         //set socket to output mode
         server->fds[POLL_FDS_CLIENT].events = POLLOUT;
         server->fds[POLL_FDS_CLIENT].revents = 0;
+        server->client_info.last_message_time = time(NULL);
     } 
 
     return received;
@@ -259,4 +265,18 @@ int bind_server_fd(int port) {
     }
 
     return server_fd;
+}
+
+int check_timeout(server_t *server) {
+    if (time(NULL) - server->client_info.last_message_time > SERVER_TIMEOUT) {
+        char buf[BUFFER_SIZE]; 
+        memset(buf, 0, BUFFER_SIZE);
+        memcpy(buf, SERVER_TIMEOUT_MSG, strlen(SERVER_TIMEOUT_MSG)); 
+
+        send(server->fds[POLL_FDS_CLIENT].fd, buf, strlen(buf), 0);
+        
+        log_info(server->logger, "[WORKER %d] exiting on timeout.", getpid());
+        return 0; // exit
+    }
+    return 1; // continue run
 }
