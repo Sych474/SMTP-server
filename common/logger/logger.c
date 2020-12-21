@@ -60,8 +60,9 @@ void logger_stop(logger_t *logger){
     if (msgsnd(logger->mq, &msg, sizeof(msg.msg_payload), 0) < 0) {
         printf("Error on sending exit message to logger!\n");
         kill(logger->logger_process_pid, SIGTERM);
-    }    
-    wait(NULL); // wait for logger
+    }   
+
+    wait(NULL);
 }
 
 void logger_child_process(const char *log_filename, int mq)

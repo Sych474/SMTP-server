@@ -52,6 +52,7 @@ typedef struct server_struct {
     struct pollfd fds[POLL_FDS_COUNT]; 
     client_info_t client_info;
     int is_master;
+    int clients_cnt;
 } server_t;
 
 server_t *server_init(int port, int signal_fd, logger_t *logger); 

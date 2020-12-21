@@ -27,6 +27,7 @@ server_t *server_init(int port, int signal_fd, logger_t *logger)
 
     server->logger = logger; 
     server->is_master = 1;
+    server->clients_cnt = 0;
 
     int server_fd = bind_server_fd(port);
     if (server_fd < 0) {
@@ -155,8 +156,14 @@ void server_stop(server_t *server)
         if (server->fds[i].fd != -1)
             close(server->fds[i].fd);  
 
-    if (server->is_master)
-        wait(NULL);  // wait workers 
+    if (server->is_master) {
+        int wpid, status = 0;
+        // wait workers 
+        //printf("%d\n", wait(&status));
+        
+        while ((wpid = waitpid(-1, &status, WNOHANG)) > 0);
+        printf("%d\n", wpid);
+    }
 }
 
 int accept_new_client(server_t *server)
