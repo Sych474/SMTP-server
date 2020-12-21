@@ -4,21 +4,13 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <fcntl.h>
-#include <unistd.h>
 #include <poll.h>
-#include <libgen.h>
+#include <time.h>
 
 #include <sys/time.h>
-#include <sys/types.h>
 #include <sys/socket.h>
-#include <sys/poll.h>
-#include <signal.h>
 #include <sys/signalfd.h>
-#include <sys/mman.h>
 
-#include <netinet/in.h>
-#include <netinet/tcp.h>
 #include <arpa/inet.h>
 
 #include "../common/logger/logger.h"
@@ -53,6 +45,7 @@ typedef struct server_struct {
     client_info_t client_info;
     int is_master;
     int clients_cnt;
+
 } server_t;
 
 server_t *server_init(int port, int signal_fd, logger_t *logger); 
