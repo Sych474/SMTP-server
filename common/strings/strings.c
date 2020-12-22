@@ -1,4 +1,4 @@
-#include "string_extentions.h"
+#include "strings.h"
 
 string_t *string_allocate(size_t str_size)
 {
@@ -45,6 +45,14 @@ int string_expand_memory(string_t *str)
     return 0;
 }
 
+int string_expand_memory_to(string_t *str, size_t size)
+{
+    while (str->str_size < size) {
+        if (string_expand_memory(str) < 0)
+            return -1; 
+    return 0;
+}
+
 void string_free(string_t *str) 
 {
     if (str)
@@ -56,11 +64,9 @@ int string_concat(string_t *str, char *addition, size_t addition_len)
 {
     size_t new_len = strlen(str->str) + addition_len;
 
-    while (str->str_size < new_len) {
-        if (string_expand_memory(str) < 0)
-            return -1; 
-    }
-    
+    if (string_expand_memory_to(str, new_len) < 0)
+        return -1; 
+        
     memcpy(str->str + strlen(str->str), addition, addition_len);
     return 0;
 }
