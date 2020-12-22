@@ -21,5 +21,7 @@ void string_free(string_t *str);
 int string_expand_memory(string_t *str); 
 
 int string_concat(string_t *str, char *addition, size_t addition_len);
+void string_begining_trim(string_t *str, size_t trim); // trim string from the begining
+
 
 #endif

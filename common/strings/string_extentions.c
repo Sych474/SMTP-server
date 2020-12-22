@@ -48,7 +48,7 @@ int string_expand_memory(string_t *str)
 void string_free(string_t *str) 
 {
     if (str)
-        free(str->str_size);
+        free(str->str);
 }
 
 
@@ -63,4 +63,10 @@ int string_concat(string_t *str, char *addition, size_t addition_len)
     
     memcpy(str->str + strlen(str->str), addition, addition_len);
     return 0;
+}
+
+void string_begining_trim(string_t *str, size_t trim) 
+{
+    memmove(str->str, str->str + trim, str->str_size - trim);
+    memset(str->str + str->str_size - trim, 0, trim); 
 }
