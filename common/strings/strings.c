@@ -47,9 +47,10 @@ int string_expand_memory(string_t *str)
 
 int string_expand_memory_to(string_t *str, size_t size)
 {
-    while (str->str_size < size) {
+    while (str->str_size < size)
         if (string_expand_memory(str) < 0)
             return -1; 
+
     return 0;
 }
 
@@ -75,4 +76,18 @@ void string_begining_trim(string_t *str, size_t trim)
 {
     memmove(str->str, str->str + trim, str->str_size - trim);
     memset(str->str + str->str_size - trim, 0, trim); 
+}
+
+int string_copy(string_t *dst, string_t *src, size_t len, size_t offset) 
+{
+    if (string_expand_memory_to(dst, len) < 0)
+        return -1; 
+    
+    memcpy(dst->str, src->str + offset, len);
+    return 0;
+}
+
+void string_clear(string_t *str) 
+{
+    memset(str->str, 0, str->str_size);
 }

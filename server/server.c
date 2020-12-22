@@ -77,7 +77,7 @@ int server_start(server_t *server, int port)
                     ssize_t s;
                     s = read(server->fds[POLL_FDS_SIGNAL].fd, &sig_fd, sizeof(sig_fd));
                     if (s == sizeof(sig_fd) && sig_fd.ssi_signo == SIGINT) {
-                        log_info(server->logger, "[WORKER %d] Stopping server...", getpid());
+                        log_info(server->logger, "[PROCESS %d] Stopping server...", getpid());
                         run = 0; 
                     }
                     break;
@@ -89,7 +89,7 @@ int server_start(server_t *server, int port)
                     run = worker_process(server);
                 break;
         }
-        if (!server->is_master)
+        if (run && !server->is_master)
             run = check_timeout(server);
     }
     server_stop(server);
@@ -110,6 +110,19 @@ int master_process(server_t *server)
             // worker
             server->is_master = 0; 
             server->client_info.last_message_time = time(NULL);
+
+            server->client_info.input_buf = string_allocate(BUFFER_SIZE);
+            if (!server->client_info.input_buf) {
+                log_error(server->logger, "[MASTER] Error on memory allocation"); 
+                return 0;
+            }
+
+            server->client_info.output_buf = string_allocate(BUFFER_SIZE);
+            if (!server->client_info.output_buf) {
+                log_error(server->logger, "[MASTER] Error on memory allocation"); 
+                return 0;
+            }
+
             set_empty_fd(server->fds, POLL_FDS_SERVER);
         } else {
             // master
@@ -162,6 +175,16 @@ void server_stop(server_t *server)
         if (server->fds[i].fd != -1)
             close(server->fds[i].fd);  
 
+    if (server->client_info.input_buf) {
+        string_free(server->client_info.input_buf);
+        free(server->client_info.input_buf);
+    }
+
+    if (server->client_info.output_buf) {
+        string_free(server->client_info.output_buf);
+        free(server->client_info.output_buf);
+    }
+
     if (server->is_master) {
         int wpid, status = 0;
         // wait workers 
@@ -188,17 +211,32 @@ int recv_from_client(server_t *server)
 {
     char buf[BUFFER_SIZE]; 
     int received = recv(server->fds[POLL_FDS_CLIENT].fd, buf, BUFFER_SIZE, 0);
-
+    
     if (received > 0) {
-        // TODO process multiple input with searching end keyword
-        memcpy(server->client_info.message, buf, received); 
-        
-        log_debug(server->logger, "[WORKER %d] received from client: %s", getpid(), server->client_info.message);
 
-        //set socket to output mode
-        server->fds[POLL_FDS_CLIENT].events = POLLOUT;
+        client_info_t *client_info = &server->client_info;
+
+        if (string_concat(client_info->input_buf, buf, received) < 0)
+            return -1;
+        
+        log_debug(server->logger, "[WORKER %d] received from client: %s", getpid(), buf);
+        log_debug(server->logger, "[WORKER %d] full message: %s", getpid(), client_info->input_buf->str);
+
+        client_info->last_message_time = time(NULL);
+
+        char *keyword = strstr(client_info->input_buf->str, END_OF_LINE);
+        size_t keyword_size = sizeof(END_OF_LINE) - 1;
+        
+        if (keyword) {
+            size_t message_size = keyword - client_info->input_buf->str;
+
+            string_clear(client_info->output_buf);
+            string_copy(client_info->output_buf, client_info->input_buf, message_size, 0);
+            string_begining_trim(client_info->input_buf, message_size + keyword_size);
+        } 
+        //set socket to output or input mode mode
+        server->fds[POLL_FDS_CLIENT].events = keyword ? POLLOUT : POLLIN;
         server->fds[POLL_FDS_CLIENT].revents = 0;
-        server->client_info.last_message_time = time(NULL);
     } 
 
     return received;
@@ -208,13 +246,13 @@ int send_to_client(server_t *server)
 {
     // TODO add bufferizig for messages (if message len is larger then BUFFER_SIZE)
     char buf[BUFFER_SIZE]; 
-    memcpy(buf, server->client_info.message, BUFFER_SIZE); 
+    memcpy(buf, server->client_info.output_buf->str, BUFFER_SIZE); 
 
     int send_len = send(server->fds[POLL_FDS_CLIENT].fd, buf, strlen(buf), 0);
 
     if (send_len > 0) {
         //clear mesage 
-        memset(server->client_info.message, 0, MAX_MESSAGE_SIZE);
+        string_clear(server->client_info.output_buf);
 
         //set socket to listen mode
         server->fds[POLL_FDS_CLIENT].events = POLLIN;

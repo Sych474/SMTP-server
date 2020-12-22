@@ -14,6 +14,7 @@
 #include <arpa/inet.h>
 
 #include "../common/logger/logger.h"
+#include "../common/strings/strings.h"
 
 #define SERVER_WORKERS_COUNT    4
 
@@ -33,11 +34,14 @@
 #define END_SIGNAL              "exit"
 
 #define SERVER_TIMEOUT_MSG      "TIMEOUT\n"
-#define SERVER_TIMEOUT          4
+#define SERVER_TIMEOUT          60
+
+#define END_OF_LINE "exit"
 
 typedef struct client_info_struct {
 
-    char message[MAX_MESSAGE_SIZE];
+    string_t *input_buf;
+    string_t *output_buf;
     long last_message_time;
 } client_info_t;
 
