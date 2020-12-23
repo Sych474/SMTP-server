@@ -1,0 +1,45 @@
+Autogen Definitions fsm;
+
+method = case;
+type   = reentrant;
+prefix = server_fsm;
+
+cookie = "void *server";
+cookie = "void *data_str";
+
+/* Состояния init, invalid, done в fsn есть по умолчанию */
+/* Состояние invalid - используется для отслеживания ошибок */
+state  = created, hello, mail_from, rcpt_to, data, quit, timeout; 
+event  = accepted, cmd_helo, cmd_ehlo, cmd_mail, cmd_rcpt, cmd_data, cmd_rset, cmd_vrfy, cmd_quit, mail_end, con_lost, timeout, con_close;
+
+transition =
+{ tst = created, hello, mail_from, rcpt_to;            tev = cmd_helo;        next = hello;   ttype = helo;    },
+{ tst = created, hello, mail_from, rcpt_to;            tev = cmd_ehlo;        next = hello;   ttype = ehlo;    },
+{ tst = created, hello, mail_from, rcpt_to;            tev = cmd_rset;        next = hello;   ttype = rset;    },
+{ tst = created, hello, mail_from, rcpt_to;            tev = cmd_quit;        next = quit;    ttype = quit;    },
+{ tst = created, hello, mail_from, rcpt_to, data;      tev = timeout;         next = timeout; ttype = timeout; },
+{ tst = "*";                                           tev = con_lost;        next = done;    ttype = lost;    },
+{ tst = timeout, quit;                                 tev = con_close;       next = done;    ttype = close;   };
+
+
+transition =
+{ tst = init;         tev = accepted;    next = created;   ttype = accepted; };
+
+transition =
+{ tst = created;      tev = cmd_vrfy;    next = created;   ttype = vrfy; };
+
+transition =
+{ tst = hello;        tev = cmd_mail;    next = mail_from; ttype = mail; },
+{ tst = hello;        tev = cmd_vrfy;    next = hello;     ttype = vrfy; };
+
+transition =
+{ tst = mail_from;    tev = cmd_rcpt;    next = rcpt_to;   ttype = rcpt; },
+{ tst = mail_from;    tev = cmd_vrfy;    next = mail_from; ttype = vrfy; };
+
+transition =
+{ tst = rcpt_to;      tev = cmd_rcpt;    next = rcpt_to;   ttype = rcpt; },
+{ tst = rcpt_to;      tev = cmd_data;    next = data;      ttype = data; },
+{ tst = rcpt_to;      tev = cmd_vrfy;    next = rcpt_to;   ttype = vrfy; };
+
+transition =
+{ tst = data;         tev = mail_end;    next = hello;     ttype = mail_received; };

@@ -38,7 +38,7 @@ void string_begining_trim(string_t *str, size_t trim);
 /**
  * @brief copy len bytes from src string with offset to dst, expand it if it is necessary.
 **/
-int string_copy(string_t *dst, string_t *src, size_t len, size_t offset);
+int string_copy(string_t *dst, char *src, size_t len, size_t offset);
 
 /**
  * @brief fill string with zeros.

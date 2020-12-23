@@ -1,5 +1,5 @@
 compile_flags := -g -g3 -O0
-source_dirs  := . ../common/logger ../common/strings
+source_dirs  := . ../common/logger ../common/strings ./autogen
 version := -std=c99
 cflags:= -Wall -Werror -pedantic -D_GNU_SOURCE
 

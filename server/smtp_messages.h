@@ -1,0 +1,8 @@
+
+#ifndef SMTP_MESSAGES_INCLUDE_GUARD
+#define SMTP_MESSAGES_INCLUDE_GUARD
+
+#define SMTP_MSG_TIMEOUT "TIMEOUT\r\n"
+#define SMTP_MSG_OK "250 OK\r\n"
+
+#endif
