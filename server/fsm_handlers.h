@@ -19,6 +19,6 @@ te_server_fsm_state fsm_handle_rset(server_t* server, te_server_fsm_state next_s
 te_server_fsm_state fsm_handle_timeout(server_t* server, te_server_fsm_state next_state);
 te_server_fsm_state fsm_handle_close(server_t* server, te_server_fsm_state next_state);
 te_server_fsm_state fsm_handle_lost(server_t* server, te_server_fsm_state next_state);
-te_server_fsm_state fsm_handle_input_error(server_t* server, te_server_fsm_state next_state);
+te_server_fsm_state fsm_handle_syntax_error(server_t* server, te_server_fsm_state next_state);
 
 #endif

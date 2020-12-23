@@ -62,7 +62,6 @@ typedef enum {
     SERVER_FSM_TR_DATA,
     SERVER_FSM_TR_EHLO,
     SERVER_FSM_TR_HELO,
-    SERVER_FSM_TR_INP_ERROR,
     SERVER_FSM_TR_INVALID,
     SERVER_FSM_TR_LOST,
     SERVER_FSM_TR_MAIL,
@@ -70,6 +69,7 @@ typedef enum {
     SERVER_FSM_TR_QUIT,
     SERVER_FSM_TR_RCPT,
     SERVER_FSM_TR_RSET,
+    SERVER_FSM_TR_SYNTAX_ERROR,
     SERVER_FSM_TR_TIMEOUT,
     SERVER_FSM_TR_VRFY
 } te_server_fsm_trans;
@@ -102,7 +102,7 @@ server_fsm_trans_table[ SERVER_FSM_STATE_CT ][ SERVER_FSM_EVENT_CT ] = {
     { SERVER_FSM_ST_DONE, SERVER_FSM_TR_LOST },     /* EVT:  CON_LOST */
     { SERVER_FSM_ST_INVALID, SERVER_FSM_TR_INVALID }, /* EVT:  TIMEOUT */
     { SERVER_FSM_ST_INVALID, SERVER_FSM_TR_INVALID }, /* EVT:  CON_CLOSE */
-    { SERVER_FSM_ST_INVALID, SERVER_FSM_TR_INVALID } /* EVT:  INP_ERROR */
+    { SERVER_FSM_ST_INVALID, SERVER_FSM_TR_INVALID } /* EVT:  SYNTAX_ERROR */
   },
 
 
@@ -120,7 +120,7 @@ server_fsm_trans_table[ SERVER_FSM_STATE_CT ][ SERVER_FSM_EVENT_CT ] = {
     { SERVER_FSM_ST_DONE, SERVER_FSM_TR_LOST },     /* EVT:  CON_LOST */
     { SERVER_FSM_ST_TIMEOUT, SERVER_FSM_TR_TIMEOUT }, /* EVT:  TIMEOUT */
     { SERVER_FSM_ST_INVALID, SERVER_FSM_TR_INVALID }, /* EVT:  CON_CLOSE */
-    { SERVER_FSM_ST_CREATED, SERVER_FSM_TR_INP_ERROR } /* EVT:  INP_ERROR */
+    { SERVER_FSM_ST_CREATED, SERVER_FSM_TR_SYNTAX_ERROR } /* EVT:  SYNTAX_ERROR */
   },
 
 
@@ -138,7 +138,7 @@ server_fsm_trans_table[ SERVER_FSM_STATE_CT ][ SERVER_FSM_EVENT_CT ] = {
     { SERVER_FSM_ST_DONE, SERVER_FSM_TR_LOST },     /* EVT:  CON_LOST */
     { SERVER_FSM_ST_TIMEOUT, SERVER_FSM_TR_TIMEOUT }, /* EVT:  TIMEOUT */
     { SERVER_FSM_ST_INVALID, SERVER_FSM_TR_INVALID }, /* EVT:  CON_CLOSE */
-    { SERVER_FSM_ST_HELLO, SERVER_FSM_TR_INP_ERROR } /* EVT:  INP_ERROR */
+    { SERVER_FSM_ST_HELLO, SERVER_FSM_TR_SYNTAX_ERROR } /* EVT:  SYNTAX_ERROR */
   },
 
 
@@ -156,7 +156,7 @@ server_fsm_trans_table[ SERVER_FSM_STATE_CT ][ SERVER_FSM_EVENT_CT ] = {
     { SERVER_FSM_ST_DONE, SERVER_FSM_TR_LOST },     /* EVT:  CON_LOST */
     { SERVER_FSM_ST_TIMEOUT, SERVER_FSM_TR_TIMEOUT }, /* EVT:  TIMEOUT */
     { SERVER_FSM_ST_INVALID, SERVER_FSM_TR_INVALID }, /* EVT:  CON_CLOSE */
-    { SERVER_FSM_ST_MAIL_FROM, SERVER_FSM_TR_INP_ERROR } /* EVT:  INP_ERROR */
+    { SERVER_FSM_ST_MAIL_FROM, SERVER_FSM_TR_SYNTAX_ERROR } /* EVT:  SYNTAX_ERROR */
   },
 
 
@@ -174,7 +174,7 @@ server_fsm_trans_table[ SERVER_FSM_STATE_CT ][ SERVER_FSM_EVENT_CT ] = {
     { SERVER_FSM_ST_DONE, SERVER_FSM_TR_LOST },     /* EVT:  CON_LOST */
     { SERVER_FSM_ST_TIMEOUT, SERVER_FSM_TR_TIMEOUT }, /* EVT:  TIMEOUT */
     { SERVER_FSM_ST_INVALID, SERVER_FSM_TR_INVALID }, /* EVT:  CON_CLOSE */
-    { SERVER_FSM_ST_RCPT_TO, SERVER_FSM_TR_INP_ERROR } /* EVT:  INP_ERROR */
+    { SERVER_FSM_ST_RCPT_TO, SERVER_FSM_TR_SYNTAX_ERROR } /* EVT:  SYNTAX_ERROR */
   },
 
 
@@ -192,7 +192,7 @@ server_fsm_trans_table[ SERVER_FSM_STATE_CT ][ SERVER_FSM_EVENT_CT ] = {
     { SERVER_FSM_ST_DONE, SERVER_FSM_TR_LOST },     /* EVT:  CON_LOST */
     { SERVER_FSM_ST_TIMEOUT, SERVER_FSM_TR_TIMEOUT }, /* EVT:  TIMEOUT */
     { SERVER_FSM_ST_INVALID, SERVER_FSM_TR_INVALID }, /* EVT:  CON_CLOSE */
-    { SERVER_FSM_ST_INVALID, SERVER_FSM_TR_INVALID } /* EVT:  INP_ERROR */
+    { SERVER_FSM_ST_INVALID, SERVER_FSM_TR_INVALID } /* EVT:  SYNTAX_ERROR */
   },
 
 
@@ -210,7 +210,7 @@ server_fsm_trans_table[ SERVER_FSM_STATE_CT ][ SERVER_FSM_EVENT_CT ] = {
     { SERVER_FSM_ST_DONE, SERVER_FSM_TR_LOST },     /* EVT:  CON_LOST */
     { SERVER_FSM_ST_INVALID, SERVER_FSM_TR_INVALID }, /* EVT:  TIMEOUT */
     { SERVER_FSM_ST_DONE, SERVER_FSM_TR_CLOSE },    /* EVT:  CON_CLOSE */
-    { SERVER_FSM_ST_INVALID, SERVER_FSM_TR_INVALID } /* EVT:  INP_ERROR */
+    { SERVER_FSM_ST_INVALID, SERVER_FSM_TR_INVALID } /* EVT:  SYNTAX_ERROR */
   },
 
 
@@ -228,7 +228,7 @@ server_fsm_trans_table[ SERVER_FSM_STATE_CT ][ SERVER_FSM_EVENT_CT ] = {
     { SERVER_FSM_ST_DONE, SERVER_FSM_TR_LOST },     /* EVT:  CON_LOST */
     { SERVER_FSM_ST_INVALID, SERVER_FSM_TR_INVALID }, /* EVT:  TIMEOUT */
     { SERVER_FSM_ST_DONE, SERVER_FSM_TR_CLOSE },    /* EVT:  CON_CLOSE */
-    { SERVER_FSM_ST_INVALID, SERVER_FSM_TR_INVALID } /* EVT:  INP_ERROR */
+    { SERVER_FSM_ST_INVALID, SERVER_FSM_TR_INVALID } /* EVT:  SYNTAX_ERROR */
   }
 };
 
@@ -238,7 +238,7 @@ server_fsm_trans_table[ SERVER_FSM_STATE_CT ][ SERVER_FSM_EVENT_CT ] = {
 #define Server_FsmStInit_off     83
 
 
-static char const zServer_FsmStrings[257] =
+static char const zServer_FsmStrings[260] =
 /*     0 */ "** OUT-OF-RANGE **\0"
 /*    19 */ "FSM Error:  in state %d (%s), event %d (%s) is invalid\n\0"
 /*    75 */ "invalid\0"
@@ -262,7 +262,7 @@ static char const zServer_FsmStrings[257] =
 /*   219 */ "mail_end\0"
 /*   228 */ "con_lost\0"
 /*   237 */ "con_close\0"
-/*   247 */ "inp_error";
+/*   247 */ "syntax_error";
 
 static const size_t aszServer_FsmStates[8] = {
     83,  88,  96,  102, 112, 120, 125, 130 };
@@ -367,13 +367,6 @@ server_fsm_step(
         break;
 
 
-    case SERVER_FSM_TR_INP_ERROR:
-        /* START == INP_ERROR == DO NOT CHANGE THIS COMMENT */
-        nxtSt = fsm_handle_input_error(server, nxtSt);
-        /* END   == INP_ERROR == DO NOT CHANGE THIS COMMENT */
-        break;
-
-
     case SERVER_FSM_TR_INVALID:
         /* START == INVALID == DO NOT CHANGE THIS COMMENT */
         exit(server_fsm_invalid_transition(server_fsm_state, trans_evt));
@@ -420,6 +413,13 @@ server_fsm_step(
         /* START == RSET == DO NOT CHANGE THIS COMMENT */
         nxtSt = fsm_handle_rset(server, nxtSt);
         /* END   == RSET == DO NOT CHANGE THIS COMMENT */
+        break;
+
+
+    case SERVER_FSM_TR_SYNTAX_ERROR:
+        /* START == SYNTAX_ERROR == DO NOT CHANGE THIS COMMENT */
+        nxtSt = fsm_handle_syntax_error(server, nxtSt);
+        /* END   == SYNTAX_ERROR == DO NOT CHANGE THIS COMMENT */
         break;
 
 

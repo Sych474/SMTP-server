@@ -369,7 +369,7 @@ int is_in_state(server_t *server, te_server_fsm_state state)
 void process_parser_result(server_t *server, parser_result_t *result)
 {
     if (result == NULL) {
-        server_fsm_step(server->client_info->fsm_state, SERVER_FSM_EV_INP_ERROR, server, NULL);
+        server_fsm_step(server->client_info->fsm_state, SERVER_FSM_EV_SYNTAX_ERROR, server, NULL);
         return;
     }
 

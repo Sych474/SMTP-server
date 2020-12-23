@@ -142,11 +142,11 @@ te_server_fsm_state fsm_handle_lost(server_t* server, te_server_fsm_state next_s
 }
 
 
-te_server_fsm_state fsm_handle_input_error(server_t* server, te_server_fsm_state next_state)
+te_server_fsm_state fsm_handle_syntax_error(server_t* server, te_server_fsm_state next_state)
 {
     log_info(server->logger, "[WORKER %d] input_error, next state: %d", getpid(), next_state);
 
-    if (server_set_output_buf(server, SMTP_MSG_INPUT_ERROR, strlen(SMTP_MSG_INPUT_ERROR)) < 0) {
+    if (server_set_output_buf(server, SMTP_MSG_SYNTAX_ERROR, strlen(SMTP_MSG_SYNTAX_ERROR)) < 0) {
         log_error(server->logger, "[WORKER %d] error in server_set_output_buf.", getpid());
         return client_info_set_state(server->client_info, SERVER_FSM_EV_INVALID);
     }

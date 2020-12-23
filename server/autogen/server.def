@@ -10,7 +10,7 @@ cookie = "void *data_str";
 /* Состояния init, invalid, done в fsn есть по умолчанию */
 /* Состояние invalid - используется для отслеживания ошибок */
 state  = created, hello, mail_from, rcpt_to, data, quit, timeout; 
-event  = accepted, cmd_helo, cmd_ehlo, cmd_mail, cmd_rcpt, cmd_data, cmd_rset, cmd_vrfy, cmd_quit, mail_end, con_lost, timeout, con_close, inp_error;
+event  = accepted, cmd_helo, cmd_ehlo, cmd_mail, cmd_rcpt, cmd_data, cmd_rset, cmd_vrfy, cmd_quit, mail_end, con_lost, timeout, con_close, syntax_error;
 
 transition =
 { tst = created, hello, mail_from, rcpt_to;            tev = cmd_helo;        next = hello;   ttype = helo;    },
@@ -27,23 +27,23 @@ transition =
 
 transition =
 { tst = created;      tev = cmd_vrfy;    next = created;   ttype = vrfy;      },
-{ tst = created;      tev = inp_error;   next = created;   ttype = inp_error; };
+{ tst = created;      tev = syntax_error;   next = created;   ttype = syntax_error; };
 
 transition =
 { tst = hello;        tev = cmd_mail;    next = mail_from; ttype = mail;      },
 { tst = hello;        tev = cmd_vrfy;    next = hello;     ttype = vrfy;      },
-{ tst = hello;        tev = inp_error;   next = hello;     ttype = inp_error; };
+{ tst = hello;        tev = syntax_error;   next = hello;     ttype = syntax_error; };
 
 transition =
 { tst = mail_from;    tev = cmd_rcpt;    next = rcpt_to;   ttype = rcpt;      },
 { tst = mail_from;    tev = cmd_vrfy;    next = mail_from; ttype = vrfy;      },
-{ tst = mail_from;    tev = inp_error;   next = mail_from; ttype = inp_error; };
+{ tst = mail_from;    tev = syntax_error;   next = mail_from; ttype = syntax_error; };
 
 transition =
 { tst = rcpt_to;      tev = cmd_rcpt;    next = rcpt_to;   ttype = rcpt; },
 { tst = rcpt_to;      tev = cmd_data;    next = data;      ttype = data; },
 { tst = rcpt_to;      tev = cmd_vrfy;    next = rcpt_to;   ttype = vrfy; },
-{ tst = rcpt_to;      tev = inp_error;   next = rcpt_to;   ttype = inp_error; };
+{ tst = rcpt_to;      tev = syntax_error;   next = rcpt_to;   ttype = syntax_error; };
 
 transition =
 { tst = data;         tev = mail_end;    next = hello;     ttype = mail_received; };
