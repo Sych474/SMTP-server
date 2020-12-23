@@ -1,7 +1,9 @@
 compile_flags := -g -g3 -O0
 source_dirs  := . ../common/logger ../common/strings ./autogen
 version := -std=c99
-cflags:= -Wall -Werror -pedantic -D_GNU_SOURCE
+cflags:= -Wall -Werror -pedantic -D_GNU_SOURCE -lm
+# -lpcre is separated, because only if it is on end of gcc command it works correct on my machine...
+pcreflags:= -lpcre 
 
 build_dir := build
 source_dirs      := $(addprefix ../,$(source_dirs))
@@ -12,12 +14,12 @@ all:
 	make server --directory=$(build_dir) --makefile=../Makefile
 
 server: $(notdir $(patsubst %.c,%.o, $(wildcard $(search_wildcards))))
-	gcc $(version) $^ -o $@  
+	gcc $(version) $^ -o $@ $(pcreflags)
 	
 VPATH := $(source_dirs) 
 
 %.o: %.c
-	gcc $(version) -c -MD $(compile_flags) $(cflags) $(addprefix -I ,$(source_dirs)) $<
+	gcc $(version) -c -MD $(compile_flags) $(cflags) $(addprefix -I ,$(source_dirs)) $< $(pcreflags)
 
 include $(wildcard *.d) 
 

@@ -2,7 +2,7 @@
 #define FSM_HANDLERS_INCLUDE_GUARD
 
 #include "server.h"
-#include "smtp_messages.h"
+#include "smtp.h"
 #include "../common/strings/strings.h"
 #include "autogen/server-fsm.h"
 

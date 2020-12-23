@@ -16,7 +16,7 @@ typedef struct string_struct
 
 
 string_t *string_allocate(size_t str_size);
-string_t *string_create(size_t str_size, char *str);
+string_t *string_create(size_t str_size, const char *str);
 void string_free(string_t *str);
 int string_expand_memory(string_t *str); 
 

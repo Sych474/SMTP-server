@@ -18,8 +18,6 @@ int send_to_client(server_t *server);
 void check_timeout(server_t *server);
 int check_state(server_t *server);
 
-int server_is_in_state(server_t *server, te_server_fsm_state state);
-
 server_t *server_init(int port, int signal_fd, logger_t *logger) 
 {
     server_t* server = (server_t*) malloc(sizeof(server_t));

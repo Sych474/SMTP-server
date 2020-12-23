@@ -50,4 +50,6 @@ int server_start(server_t *server, int port);
 
 int server_set_output_buf(server_t *server, char* msg, size_t msg_size);
 
+int server_is_in_state(server_t *server, te_server_fsm_state state);
+
 #endif

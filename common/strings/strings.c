@@ -16,7 +16,7 @@ string_t *string_allocate(size_t str_size)
     return string;
 }
 
-string_t *string_create(size_t str_size, char *str) 
+string_t *string_create(size_t str_size, const char *str) 
 {
     size_t str_len = strlen(str);
     if (str_len > str_size)
