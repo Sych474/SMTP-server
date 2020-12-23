@@ -1,5 +1,15 @@
 #include "parser.h"
 
+const char* smtp_regexps[SMTP_CMD_CNT] = {
+    HELO_REGEXP,
+    EHLO_REGEXP, 
+    MAIL_REGEXP, 
+    RCPT_REGEXP, 
+    DATA_REGEXP, 
+    RSET_REGEXP, 
+    QUIT_REGEXP, 
+    VRFY_REGEXP
+};
 
 parser_t *parser_init() 
 {
@@ -11,7 +21,7 @@ parser_t *parser_init()
     int pcre_error_offset;
 
     for (int i = 0; i < SMTP_CMD_CNT; i++) {
-        parser->compiled_regexps[i].regexp = pcre_compile(regexps[i], PCRE_ANCHORED, &pcre_error, &pcre_error_offset, NULL);
+        parser->compiled_regexps[i].regexp = pcre_compile(smtp_regexps[i], PCRE_ANCHORED, &pcre_error, &pcre_error_offset, NULL);
         if(pcre_error != NULL) {
             parser_finalize(parser);
             free(parser);
@@ -31,18 +41,22 @@ parser_t *parser_init()
 
 parser_result_t *parser_parse(parser_t *parser, char* msg, int msg_len) 
 {
+    printf("\n TRY FIND MATCH FOR %s \n", msg);
     parser_result_t *result = malloc(sizeof(parser_result_t));
     if (!parser)
         return NULL; 
-
+        
+    result->smtp_cmd = -1;
     int ovector[OVECSIZE];
 
     for (int i = 0; i < SMTP_CMD_CNT; i++) {
         int res = pcre_exec(parser->compiled_regexps[i].regexp, parser->compiled_regexps[i].extra,
                                     msg, msg_len, 0, 0, ovector, OVECSIZE);
 
-        if (res == PCRE_ERROR_NOMEMORY || res == PCRE_ERROR_UNKNOWN_NODE)
-            result->smtp_cmd = SMTP_NO_CMD; 
+        if (res == PCRE_ERROR_NOMEMORY || res == PCRE_ERROR_UNKNOWN_NODE){
+            free(result);
+            return NULL; 
+        }
         
         if (res > 0) {
             printf("\n There's a match with cmd #%d\n",i);

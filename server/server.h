@@ -13,10 +13,12 @@
 
 #include <arpa/inet.h>
 
+#include "parser.h"
 #include "../common/logger/logger.h"
 #include "../common/strings/strings.h"
 #include "autogen/server-fsm.h"
 #include "client_info.h"
+
 
 #define BUFFER_SIZE             1024
 
@@ -32,13 +34,12 @@
 #define END_SIGNAL              "exit"
 
 #define SERVER_TIMEOUT_MSG      "TIMEOUT\n"
-#define SERVER_TIMEOUT          3
-
-#define END_OF_LINE "exit"
+#define SERVER_TIMEOUT          300
 
 typedef struct server_struct {    
 
-    logger_t *logger; 
+    logger_t *logger;
+    parser_t *parser; 
     struct pollfd fds[POLL_FDS_COUNT]; 
     client_info_t *client_info;
     int is_master;
@@ -49,7 +50,5 @@ server_t *server_init(int port, int signal_fd, logger_t *logger);
 int server_start(server_t *server, int port);
 
 int server_set_output_buf(server_t *server, char* msg, size_t msg_size);
-
-int server_is_in_state(server_t *server, te_server_fsm_state state);
 
 #endif

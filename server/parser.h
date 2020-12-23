@@ -1,3 +1,6 @@
+#ifndef PARSER_INCLUDE_GUARD
+#define PARSER_INCLUDE_GUARD
+
 #include <string.h>
 #include <stdlib.h>
 #include <pcre.h>  
@@ -7,7 +10,7 @@
 #include "../common/strings/strings.h"
 
 #define EOS '\0'
-#define EOL "\r\n"
+#define EOL "\n"
 #define EOM "\r\n.\r\n"
 
 #define SPACES_REGEXP "\\s*"
@@ -23,17 +26,6 @@
 #define RSET_REGEXP "RSET" EOL
 #define QUIT_REGEXP "QUIT" EOL
 #define VRFY_REGEXP "VRFY" DOMAIN_REGEXP EOL
-
-const char* regexps[SMTP_CMD_CNT] = {
-    HELO_REGEXP,
-    EHLO_REGEXP, 
-    MAIL_REGEXP, 
-    RCPT_REGEXP, 
-    DATA_REGEXP, 
-    RSET_REGEXP, 
-    QUIT_REGEXP, 
-    VRFY_REGEXP
-};
 
 #define OVECSIZE 10
 
@@ -57,3 +49,5 @@ void parser_finalize(parser_t * parser);
 parser_result_t *parser_parse(parser_t * parser, char* msg, int msg_len);
 
 void parser_result_free(parser_result_t *parser);
+
+#endif

@@ -17,6 +17,10 @@ int send_to_client(server_t *server);
 
 void check_timeout(server_t *server);
 int check_state(server_t *server);
+int is_in_state(server_t *server, te_server_fsm_state state);
+
+void process_parser_result(server_t *server, parser_result_t *result);
+
 
 server_t *server_init(int port, int signal_fd, logger_t *logger) 
 {
@@ -24,6 +28,13 @@ server_t *server_init(int port, int signal_fd, logger_t *logger)
 
     if (server == NULL) {
         log_error(logger, "Can not allocate memory for server!");
+        return NULL;
+    }
+
+    server->parser = parser_init();
+        if (server->parser == NULL) {
+        free(server);
+        log_error(logger, "Can not allocate parser for server!");
         return NULL;
     }
 
@@ -180,6 +191,9 @@ void server_stop(server_t *server)
         // wait workers 
         int wpid, status = 0;
         while ((wpid = waitpid(-1, &status, WNOHANG)) > 0);
+
+        parser_finalize(server->parser);
+        free(server->parser);
     }
     log_info(server->logger, "[PROCESS %d] stopped.", getpid());
 }
@@ -213,6 +227,10 @@ int recv_from_client(server_t *server)
     char buf[BUFFER_SIZE]; 
     int received = recv(server->fds[POLL_FDS_CLIENT].fd, buf, BUFFER_SIZE, 0);
     
+    if (received == 0) {
+        server_fsm_step(server->client_info->fsm_state, SERVER_FSM_EV_CON_LOST, server, NULL);
+    }
+
     if (received > 0) {
 
         client_info_t *client_info = server->client_info;
@@ -225,23 +243,21 @@ int recv_from_client(server_t *server)
 
         client_info->last_message_time = time(NULL);
 
-        char *keyword = strstr(client_info->input_buf->str, END_OF_LINE);
-        size_t keyword_size = sizeof(END_OF_LINE) - 1;
+        char *eol = strstr(client_info->input_buf->str, EOL);
         
-        if (keyword) {
-            size_t message_size = keyword - client_info->input_buf->str;
+        size_t eol_size = sizeof(EOL) - 1;
+        eol += eol_size;
 
-            client_info_set_output_buf(client_info, client_info->input_buf->str, message_size);
-            client_info_trim_input_buf(client_info, message_size + keyword_size);
+        if (eol) {
+            size_t message_size = eol - client_info->input_buf->str;
+
+            parser_result_t * p_res = parser_parse(server->parser, client_info->input_buf->str, message_size);
+            process_parser_result(server, p_res);
+
+            //client_info_set_output_buf(client_info, client_info->input_buf->str, message_size);
+            client_info_trim_input_buf(client_info, message_size + eol_size);
         } 
-        //set socket to output or input mode mode
-        server->fds[POLL_FDS_CLIENT].events = keyword ? POLLOUT : POLLIN;
-        server->fds[POLL_FDS_CLIENT].revents = 0;
     } 
-    if (received == 0) {
-        server_fsm_step(server->client_info->fsm_state, SERVER_FSM_EV_CON_LOST, server, NULL);
-    }
-
 
     return received;
 }
@@ -263,7 +279,7 @@ int send_to_client(server_t *server)
         server->fds[POLL_FDS_CLIENT].revents = 0;
 
         // process correct closing
-        if (server_is_in_state(server, SERVER_FSM_ST_TIMEOUT) || server_is_in_state(server, SERVER_FSM_EV_CMD_QUIT))
+        if (is_in_state(server, SERVER_FSM_ST_TIMEOUT) || is_in_state(server, SERVER_FSM_ST_QUIT))
             server_fsm_step(server->client_info->fsm_state, SERVER_FSM_EV_CON_CLOSE, server, NULL);
     }
 
@@ -283,7 +299,6 @@ void set_empty_fd(struct pollfd* fds, int index)
     fds[index].events = 0;
     fds[index].revents = 0;
 }
-
 
 int bind_server_fd(int port) 
 {
@@ -319,17 +334,17 @@ int bind_server_fd(int port)
 void check_timeout(server_t *server) 
 {   
     // if timeout is not interesting now - skip check
-    if (server_is_in_state(server, SERVER_FSM_ST_TIMEOUT) 
-        || server_is_in_state(server, SERVER_FSM_ST_QUIT) 
-        || server_is_in_state(server, SERVER_FSM_ST_DONE)
-        || server_is_in_state(server, SERVER_FSM_ST_INVALID))
+    if (is_in_state(server, SERVER_FSM_ST_TIMEOUT) 
+        || is_in_state(server, SERVER_FSM_ST_QUIT) 
+        || is_in_state(server, SERVER_FSM_ST_DONE)
+        || is_in_state(server, SERVER_FSM_ST_INVALID))
         return;
 
     if (time(NULL) - server->client_info->last_message_time > SERVER_TIMEOUT) {
         
         server_fsm_step(server->client_info->fsm_state, SERVER_FSM_EV_TIMEOUT, server, NULL);
         
-        if (server_is_in_state(server, SERVER_FSM_ST_INVALID))
+        if (is_in_state(server, SERVER_FSM_ST_INVALID))
             log_error(server->logger, "[WORKER %d] error in server_fsm_step to timeout.", getpid());
         else     
             log_info(server->logger, "[WORKER %d] Start exiting on timeout...", getpid());
@@ -338,10 +353,54 @@ void check_timeout(server_t *server)
 
 int check_state(server_t *server) 
 {
-    return (!server_is_in_state(server, SERVER_FSM_ST_INVALID) && !server_is_in_state(server, SERVER_FSM_ST_DONE));
+    return (!is_in_state(server, SERVER_FSM_ST_INVALID) && !is_in_state(server, SERVER_FSM_ST_DONE));
 }
 
-int server_is_in_state(server_t *server, te_server_fsm_state state)
+int is_in_state(server_t *server, te_server_fsm_state state)
 {
     return server->client_info->fsm_state == state;
+}
+
+void process_parser_result(server_t *server, parser_result_t *result)
+{
+    if (result == NULL) {
+        log_error(server->logger, "[WORKER %d] unknown command from client", getpid());
+        return;
+    }
+
+
+    switch (result->smtp_cmd)
+    {
+    case SMTP_HELO_CMD:
+        server_fsm_step(server->client_info->fsm_state, SERVER_FSM_EV_CMD_HELO, server, NULL);
+        break;
+    case SMTP_EHLO_CMD:
+        server_fsm_step(server->client_info->fsm_state, SERVER_FSM_EV_CMD_EHLO, server, NULL);
+        break;
+    case SMTP_MAIL_CMD:
+        server_fsm_step(server->client_info->fsm_state, SERVER_FSM_EV_CMD_MAIL, server, result->data);
+        break;
+    case SMTP_RCPT_CMD:
+        server_fsm_step(server->client_info->fsm_state, SERVER_FSM_EV_CMD_RCPT, server, result->data);
+        break;
+    case SMTP_DATA_CMD:
+        server_fsm_step(server->client_info->fsm_state, SERVER_FSM_EV_CMD_DATA, server, NULL);
+        break;
+    case SMTP_RSET_CMD:
+        server_fsm_step(server->client_info->fsm_state, SERVER_FSM_EV_CMD_RSET, server, NULL);
+        break;
+    case SMTP_QUIT_CMD:
+        server_fsm_step(server->client_info->fsm_state, SERVER_FSM_EV_CMD_QUIT, server, NULL);
+        break;
+    case SMTP_VRFY_CMD:
+        server_fsm_step(server->client_info->fsm_state, SERVER_FSM_EV_CMD_VRFY, server, NULL);
+        break;
+    
+    default:
+        log_error(server->logger, "[WORKER %d] process_parser_result unknown smtp_cmd %d.", getpid(), result->smtp_cmd);
+        break;
+    }
+
+    if (is_in_state(server, SERVER_FSM_ST_INVALID))
+        log_error(server->logger, "[WORKER %d] error in server_fsm_step with cmd %d.", getpid(), result->smtp_cmd);
 }
