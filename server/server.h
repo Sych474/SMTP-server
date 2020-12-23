@@ -32,8 +32,6 @@
 #define POLL_WORKER_START       1
 
 #define END_SIGNAL              "exit"
-
-#define SERVER_TIMEOUT_MSG      "TIMEOUT\n"
 #define SERVER_TIMEOUT          300
 
 typedef struct server_struct {    

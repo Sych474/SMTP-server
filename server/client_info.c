@@ -2,15 +2,11 @@
 
 void client_info_finalize(client_info_t *client_info) 
 {
-    if (client_info->input_buf) {
+    if (client_info->input_buf)
         string_free(client_info->input_buf);
-        free(client_info->input_buf);
-    }
 
-    if (client_info->output_buf) {
+    if (client_info->output_buf)
         string_free(client_info->output_buf);
-        free(client_info->output_buf);
-    }
 }
 
 client_info_t *client_info_init()

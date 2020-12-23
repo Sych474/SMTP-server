@@ -9,7 +9,6 @@
 #include "smtp.h"
 #include "../common/strings/strings.h"
 
-#define EOS '\0'
 #define EOL "\n"
 #define EOM "\r\n.\r\n"
 

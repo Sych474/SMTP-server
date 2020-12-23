@@ -56,8 +56,10 @@ int string_expand_memory_to(string_t *str, size_t size)
 
 void string_free(string_t *str) 
 {
-    if (str)
+    if (str) {
         free(str->str);
+        free(str);
+    }
 }
 
 

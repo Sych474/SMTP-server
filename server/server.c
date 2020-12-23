@@ -5,21 +5,24 @@ int bind_server_fd(int port);
 
 int master_process(server_t *server);
 int worker_process(server_t *server);
-void server_stop(server_t *server);
+void server_finalize(server_t *server);
 
 int accept_new_client(server_t *server);
 
 void set_empty_fd(struct pollfd* fds, int index);
 void set_pollin_fd(struct pollfd* fds, int index, int fd);
 
+// recv
 int recv_from_client(server_t *server);
+int process_received_str(server_t *server, char *buf, int received);
+void process_parser_result(server_t *server, parser_result_t *result);
+
+// send 
 int send_to_client(server_t *server);
 
 void check_timeout(server_t *server);
 int check_state(server_t *server);
 int is_in_state(server_t *server, te_server_fsm_state state);
-
-void process_parser_result(server_t *server, parser_result_t *result);
 
 
 server_t *server_init(int port, int signal_fd, logger_t *logger) 
@@ -106,7 +109,7 @@ int server_start(server_t *server, int port)
             run = check_state(server);
         }
     }
-    server_stop(server);
+    server_finalize(server);
     return 0;
 }
 
@@ -176,7 +179,7 @@ int worker_process(server_t *server)
     return 0;
 }
 
-void server_stop(server_t *server)
+void server_finalize(server_t *server)
 {
     for (int i = 0; i < POLL_FDS_COUNT; i++)
         if (server->fds[i].fd != -1)
@@ -232,32 +235,34 @@ int recv_from_client(server_t *server)
     }
 
     if (received > 0) {
-
-        client_info_t *client_info = server->client_info;
-
-        if (client_info_concat_input_buf(client_info, buf, received) < 0)
-            return -1;
-        
-        log_debug(server->logger, "[WORKER %d] received from client: %s", getpid(), buf);
-        log_debug(server->logger, "[WORKER %d] full message: %s", getpid(), client_info->input_buf->str);
-
-        client_info->last_message_time = time(NULL);
-
-        char *eol = strstr(client_info->input_buf->str, EOL);
-        
-        size_t eol_size = sizeof(EOL) - 1;
-        eol += eol_size;
-
-        if (eol) {
-            size_t message_size = eol - client_info->input_buf->str;
-
-            parser_result_t * p_res = parser_parse(server->parser, client_info->input_buf->str, message_size);
-            process_parser_result(server, p_res);
-
-            //client_info_set_output_buf(client_info, client_info->input_buf->str, message_size);
-            client_info_trim_input_buf(client_info, message_size + eol_size);
-        } 
+        return process_received_str(server, buf, received);
     } 
+
+    return received;
+}
+
+int process_received_str(server_t *server, char *buf, int received)
+{
+    client_info_t *client_info = server->client_info;
+
+    if (client_info_concat_input_buf(client_info, buf, received) < 0)
+        return -1;
+    
+    client_info->last_message_time = time(NULL);
+
+    
+    char *eol = strstr(client_info->input_buf->str, EOL);
+    size_t eol_size = sizeof(EOL) - 1;
+    eol += eol_size;
+
+    if (eol) {
+        size_t message_size = eol - client_info->input_buf->str;
+
+        parser_result_t * p_res = parser_parse(server->parser, client_info->input_buf->str, message_size);
+        process_parser_result(server, p_res);
+        parser_result_free(p_res);
+        client_info_trim_input_buf(client_info, message_size + eol_size);
+    }
 
     return received;
 }
@@ -364,7 +369,7 @@ int is_in_state(server_t *server, te_server_fsm_state state)
 void process_parser_result(server_t *server, parser_result_t *result)
 {
     if (result == NULL) {
-        log_error(server->logger, "[WORKER %d] unknown command from client", getpid());
+        server_fsm_step(server->client_info->fsm_state, SERVER_FSM_EV_INP_ERROR, server, NULL);
         return;
     }
 
@@ -397,7 +402,7 @@ void process_parser_result(server_t *server, parser_result_t *result)
         break;
     
     default:
-        log_error(server->logger, "[WORKER %d] process_parser_result unknown smtp_cmd %d.", getpid(), result->smtp_cmd);
+        log_error(server->logger, "[WORKER %d] unexpected smtp_cmd %d.", getpid(), result->smtp_cmd);
         break;
     }
 

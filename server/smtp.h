@@ -13,6 +13,8 @@
 #define SMTP_MSG_QUIT "221 SMTP server closing connection\r\n"
 
 #define SMTP_MSG_TIMEOUT "TIMEOUT\r\n"
+#define SMTP_MSG_INPUT_ERROR "500 Syntax error try again!\r\n"
+
 
 
 typedef enum smtp_cmds_enum {

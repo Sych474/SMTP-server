@@ -42,23 +42,20 @@ parser_t *parser_init()
 parser_result_t *parser_parse(parser_t *parser, char* msg, int msg_len) 
 {
     printf("\n TRY FIND MATCH FOR %s \n", msg);
-    parser_result_t *result = malloc(sizeof(parser_result_t));
-    if (!parser)
-        return NULL; 
-        
-    result->smtp_cmd = -1;
     int ovector[OVECSIZE];
 
     for (int i = 0; i < SMTP_CMD_CNT; i++) {
         int res = pcre_exec(parser->compiled_regexps[i].regexp, parser->compiled_regexps[i].extra,
                                     msg, msg_len, 0, 0, ovector, OVECSIZE);
 
-        if (res == PCRE_ERROR_NOMEMORY || res == PCRE_ERROR_UNKNOWN_NODE){
-            free(result);
+        if (res == PCRE_ERROR_NOMEMORY || res == PCRE_ERROR_UNKNOWN_NODE)
             return NULL; 
-        }
         
         if (res > 0) {
+            parser_result_t *result = malloc(sizeof(parser_result_t));
+            if (!parser)
+                return NULL; 
+
             printf("\n There's a match with cmd #%d\n",i);
             result->smtp_cmd = i; // cmds and regexps in compiled_regexps indexes are equal 
             
@@ -75,9 +72,10 @@ parser_result_t *parser_parse(parser_t *parser, char* msg, int msg_len)
                 if (text) 
                     pcre_free_substring(text);
             }
+            return result;
         }
     }
-    return result;
+    return NULL;
 }
 
 void parser_finalize(parser_t *parser) 
@@ -93,6 +91,8 @@ void parser_finalize(parser_t *parser)
 
 void parser_result_free(parser_result_t *result)
 {
-    if(result)
+    if(result) {
         string_free(result->data);
+        free(result);
+    }
 }
