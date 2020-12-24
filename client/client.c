@@ -3,8 +3,17 @@
 char *keystring = "exit";
 
 char *server_ip = "127.0.0.1";
+// это грязно, но я не хочу разбирать где я ссылаюсь второй раз в хедере
+const int smtp_cmds_to_send_event[7] = {
+   /* SMTP_HELO_CMD = */CLIENT_EV_EVENT_SEND_HELO,
+    /*SMTP_EHLO_CMD = */CLIENT_EV_EVENT_SEND_EHLO,
+    /*SMTP_MAIL_CMD = */CLIENT_EV_EVENT_SEND_MAIL_FROM,
+    /*SMTP_RCPT_CMD = */CLIENT_EV_EVENT_SEND_RCPT_TO,
+    /*SMTP_DATA_CMD = */CLIENT_EV_EVENT_SEND_DATA,
+    /*SMTP_RSET_CMD = */CLIENT_EV_EVENT_SEND_RESET,
+    /*SMTP_QUIT_CMD = */CLIENT_EV_EVENT_SEND_QUIT
+};
 
-char* command_handler(int serverid, client_t *client,char* recv);
 client_t *client_init(int port)
 {
 
@@ -88,7 +97,6 @@ void start_poll(client_t *client)
                 }
                 
                 printf("\nReceived %s from server %i\n", recv,client->fd[i].fd);
-                command_handler(i,client,recv);
                 strncat(client->server_message[i].message,recv,sizeof(client->server_message[i].message)-strlen(client->server_message[i].message)-1);
 
                 if (strstr(recv,keystring) != NULL)
@@ -98,7 +106,31 @@ void start_poll(client_t *client)
                     client->fd[i].events = POLLIN;
 
                 }
+
                 client->fd[i].events = POLLOUT;
+                if (strstr(recv,"OK"))
+                {
+                    printf("\nGot ok, changing state");
+                    //тут костыль с ифом, потому что я пока не уверен приходит ли ответ после отсылки 'DATA'
+                    if(client->state[i]==CLIENT_ST_STATE_SEND_DATA)
+                    {
+                        client->state[i]=client_step(client->state[i],CLIENT_EV_EVENT_GOT_DATA_RESPONSE ,i,client,NULL,0);
+                    }
+                    else if (client->state[i]==CLIENT_ST_STATE_SEND_MESSAGE_BODY)
+                    {
+                        client->state[i]=client_step(client->state[i],CLIENT_EV_EVENT_ALL_MAIL_SENT ,i,client,NULL,0);
+                    }
+                    else if(client->state[i]==CLIENT_ST_STATE_SEND_QUIT)
+                    {
+                        client->state[i]=client_step(client->state[i],CLIENT_EV_EVENT_GOT_QUIT_RESPONSE ,i,client,NULL,0);
+
+                    }
+                    else
+                    {
+                        client->state[i]=client_step(client->state[i],CLIENT_EV_EVENT_GOT_OK ,i,client,NULL,0);
+                    }
+                    
+                }
             }
 
         }
@@ -120,7 +152,6 @@ client_t* add_server(client_t*  client,char *ip, int port)
     }
     
     server.sin_family = AF_INET;
-    //inet_aton(server_ip,&(server.sin_addr));
     server.sin_addr.s_addr = inet_addr(ip);
     server.sin_port = htons(port);
     int len = sizeof(server);
@@ -146,78 +177,60 @@ void write_to_server(client_t *client)
     printf("choose server to write to:\n");
     scanf("%i", &serverid);
     char buffer[BUFFER_SIZE];
+    string_t *newMessage = string_create(1,"");
 
     memset(client->server_message[serverid].message,0,sizeof(client->server_message->message));
 
-
-    memset(buffer,0,sizeof(buffer));
-    printf("your message for server %i (to quit write 'exit' anywhere in the message):\n",serverid);
-    scanf(" %[^\n]", buffer);
-
-    if (write(client->fd[serverid].fd,buffer,strlen(buffer)) <= 0)
+    //потом вынести этот иф в отдельную функцию
+    if(client->state[serverid] == CLIENT_ST_STATE_RECEIVE_DATA_RESPONSE)
     {
-        on_error("cannot write to server");
+        while(1)
+        {
+            memset(buffer,0,sizeof(buffer));
+            printf("your data message for server %i (to quit write 'exit' anywhere in the message):\n",serverid);
+            scanf(" %[^\n]", buffer);
+            printf("ur print '%s'",buffer);
+
+            string_concat(newMessage,buffer,strlen(buffer));
+            printf("\nur message %s\n",newMessage->str);
+            if (strstr(buffer,"exit"))
+            {
+                if (write(client->fd[serverid].fd,newMessage->str,newMessage->str_size) <= 0)
+                {
+                    on_error("cannot write to server");
+                }
+                client->state[serverid]=client_step(client->state[serverid],CLIENT_EV_EVENT_SEND_MESSAGE_BODY,serverid,client,newMessage->str,newMessage->str_size);
+                client->fd[serverid].events=POLLIN;
+                break;
+            }
+        }
+
     }
-    client->fd[serverid].events=POLLIN;
-
-}
-
-char* command_handler(int serverid, client_t *client,char* recv)
-{
-
-    if(strstr(recv,"GREETING"))
+    else
     {
-        printf("\n Print state %u",client->state[serverid]);
-        //client->state=client_step(client->state,EV_,serverid,client,NULL,0);
-        printf("\n Print state %u",client->state[serverid]);
+        memset(buffer,0,sizeof(buffer));
+        printf("your message for server %i (to quit write 'exit' anywhere in the message):\n",serverid);
+        scanf(" %[^\n]", buffer);
+        printf("ur print '%s'",buffer);
+        parser_t *pars = parser_init();
+        parser_result_t *result = parser_parse(pars,buffer,strlen(buffer));
+        printf("\ncurrent result of regex %d",result->smtp_cmd);
+        parser_finalize(pars);
+        
+        printf("WHAT's next event?%d",smtp_cmds_to_send_event[result->smtp_cmd] );
+        client->state[serverid]=client_step(client->state[serverid],smtp_cmds_to_send_event[result->smtp_cmd] ,serverid,client,NULL,0);
+        if (write(client->fd[serverid].fd,buffer,strlen(buffer)) <= 0)
+        {
+            on_error("cannot write to server");
+        }
+        client->fd[serverid].events=POLLIN;
+        
     }
-    if(strstr(recv,"HELO"))
-    {
-        printf("\n Print state %u",client->state[serverid]);
-        client->state[serverid]=client_step(client->state[serverid],CLIENT_EV_EVENT_SEND_HELO,serverid,client,NULL,0);
-        printf("\n Print state %u",client->state[serverid]);
-        client->state[serverid]=client_step(client->state[serverid],CLIENT_EV_EVENT_GOT_OK,serverid,client,NULL,0);
-        printf("\n Print state %u",client->state[serverid]);
-    }
-    if(strstr(recv,"RCPT OK"))
-    {
-        printf("\n Print state %u",client->state[serverid]);
-        client->state[serverid]=client_step(client->state[serverid],CLIENT_EV_EVENT_SEND_RCPT_TO,serverid,client,NULL,0);
-        printf("\n Print state %u",client->state[serverid]);
-        client->state[serverid]=client_step(client->state[serverid],CLIENT_EV_EVENT_GOT_OK,serverid,client,NULL,0);
-        printf("\n Print state %u",client->state[serverid]);
-        client->state[serverid]=client_step(client->state[serverid],CLIENT_EV_EVENT_SEND_DATA,serverid,client,NULL,0); // запрос отправки данных
-        printf("\n Print state %u",client->state[serverid]);
-        client->state[serverid]=client_step(client->state[serverid],CLIENT_EV_EVENT_GOT_DATA_RESPONSE,serverid,client,NULL,0); // ответ от сервера об отправке данных
-        printf("\n Print state %u",client->state[serverid]);
-        client->state[serverid]=client_step(client->state[serverid],CLIENT_EV_EVENT_SEND_MESSAGE_BODY,serverid,client,NULL,0); // отправка данных
-        printf("\n Print state %u",client->state[serverid]);
-        client->state[serverid]=client_step(client->state[serverid],CLIENT_EV_EVENT_ALL_MAIL_SENT,serverid,client,NULL,0); // ответ от сервера об отправке данных
-        printf("\n Print state %u",client->state[serverid]);
     
-    }
-    if(strstr(recv,"MAIL_FROM OK"))
-    {
-        printf("\n Print state %u",client->state[serverid]);
-        client->state[serverid]=client_step(client->state[serverid],CLIENT_EV_EVENT_SEND_MAIL_FROM,serverid,client,NULL,0);
-        printf("\n Print state %u",client->state[serverid]);
-        client->state[serverid]=client_step(client->state[serverid],CLIENT_EV_EVENT_GOT_OK,serverid,client,NULL,0);
-        printf("\n Print state %u",client->state[serverid]);
+    
 
-    }
-    if(strstr(recv,"QUIT"))
-    {
-        printf("\n Print state %u",client->state[serverid]);
-        client->state[serverid]=client_step(client->state[serverid],CLIENT_EV_EVENT_SEND_QUIT,serverid,client,NULL,0); // отправка QUIT
-        printf("\n Print state %u",client->state[serverid]);
-        client->state[serverid]=client_step(client->state[serverid],CLIENT_EV_EVENT_GOT_QUIT_RESPONSE,serverid,client,NULL,0); // ответ от сервера о принятии QUIT
-        printf("\n Print state %u",client->state[serverid]);
-
-
-    }
-        printf("\n Print final state %u",client->state[serverid]);
-     return "HEY";
 }
+
 
 void client_fill_pollout(client_t *client, int index, int fd)
 {

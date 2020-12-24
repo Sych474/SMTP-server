@@ -14,6 +14,8 @@
 #include <fcntl.h>
 #include <assert.h>
 #include "client-fsm.h"
+#include "parser.h"
+#include "../common/strings/strings.h"
 
 #define BUFFER_SIZE 1024
 #define MAX_FD_SIZE 256
