@@ -17,6 +17,7 @@ typedef struct client_info_struct {
 
     string_t *input_buf;
     string_t *output_buf;
+    string_t *mail;
     long last_message_time;
     te_server_fsm_state fsm_state;
 } client_info_t;

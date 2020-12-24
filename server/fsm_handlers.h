@@ -12,7 +12,7 @@ te_server_fsm_state fsm_handle_ehlo(server_t* server, te_server_fsm_state next_s
 te_server_fsm_state fsm_handle_mail(server_t* server, string_t *data, te_server_fsm_state next_state);
 te_server_fsm_state fsm_handle_rcpt(server_t* server, string_t *data, te_server_fsm_state next_state);
 te_server_fsm_state fsm_handle_data(server_t* server, te_server_fsm_state next_state);
-te_server_fsm_state fsm_handle_mail_received(server_t* server, string_t *data, te_server_fsm_state next_state);
+te_server_fsm_state fsm_handle_mail_end(server_t* server, string_t *data, te_server_fsm_state next_state);
 te_server_fsm_state fsm_handle_quit(server_t* server, te_server_fsm_state next_state);
 te_server_fsm_state fsm_handle_vrfy(server_t* server, te_server_fsm_state next_state);
 te_server_fsm_state fsm_handle_rset(server_t* server, te_server_fsm_state next_state);

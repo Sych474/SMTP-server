@@ -68,14 +68,17 @@ te_server_fsm_state fsm_handle_data(server_t* server, te_server_fsm_state next_s
         log_error(server->logger, "[WORKER %d] error in server_set_output_buf.", getpid());
         return client_info_set_state(server->client_info, SERVER_FSM_EV_INVALID);
     }
-
     return client_info_set_state(server->client_info, next_state);
 }
 
-te_server_fsm_state fsm_handle_mail_received(server_t* server, string_t *data, te_server_fsm_state next_state)
+te_server_fsm_state fsm_handle_mail_end(server_t* server, string_t *data, te_server_fsm_state next_state)
 {
     log_info(server->logger, "[WORKER %d] END OF DATA, next state: %d", getpid(), next_state);
 
+    if (server_set_output_buf(server, SMTP_MSG_DATA_END, strlen(SMTP_MSG_DATA)) < 0) {
+        log_error(server->logger, "[WORKER %d] error in server_set_output_buf.", getpid());
+        return client_info_set_state(server->client_info, SERVER_FSM_EV_INVALID);
+    }
     return client_info_set_state(server->client_info, next_state);
 }
 

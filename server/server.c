@@ -14,7 +14,8 @@ void set_pollin_fd(struct pollfd* fds, int index, int fd);
 
 // recv
 int recv_from_client(server_t *server);
-int process_received_str(server_t *server, char *buf, int received);
+void recv_mail_from_client(server_t *server, char *buf);
+void recv_cmd_from_client(server_t *server, char *buf);
 void process_parser_result(server_t *server, parser_result_t *result);
 
 // send 
@@ -235,36 +236,64 @@ int recv_from_client(server_t *server)
     }
 
     if (received > 0) {
-        return process_received_str(server, buf, received);
+        if (client_info_concat_input_buf(server->client_info, buf, received) < 0)
+            return -1;
+        
+        server->client_info->last_message_time = time(NULL);
+
+        
+        if (!is_in_state(server, SERVER_FSM_ST_DATA))
+            recv_cmd_from_client(server, buf);
+        else
+            recv_mail_from_client(server, buf);
     } 
 
     return received;
 }
 
-int process_received_str(server_t *server, char *buf, int received)
+void recv_mail_from_client(server_t *server, char *buf) 
 {
-    client_info_t *client_info = server->client_info;
-
-    if (client_info_concat_input_buf(client_info, buf, received) < 0)
-        return -1;
+    char *end = parser_parse_end_of_mail(server->client_info->input_buf->str);
     
-    client_info->last_message_time = time(NULL);
+    if (end) {
+        size_t end_size = PARSER_EOM_SIZE; 
+        end += end_size;
 
+        size_t message_size = end - server->client_info->input_buf->str;
+        server->client_info->mail = string_create(message_size, server->client_info->input_buf->str);
+        client_info_trim_input_buf(server->client_info, message_size + end_size);
+        
+        if (!server->client_info->mail) {
+            log_error(server->logger, "[WORKER %d] error on memory allocation.", getpid());
+            //TODO add additional error handlong
+        }
+
+        server_fsm_step(server->client_info->fsm_state, SERVER_FSM_EV_MAIL_END, server, NULL);
+        if (is_in_state(server, SERVER_FSM_ST_INVALID))
+            log_error(server->logger, "[WORKER %d] error in server_fsm_step.", getpid());
+    } else {
+        //set socket to listen mode - continue receiving DATA
+        server->fds[POLL_FDS_CLIENT].events = POLLIN;
+        server->fds[POLL_FDS_CLIENT].revents = 0;
+
+    }
+}
+
+void recv_cmd_from_client(server_t *server, char *buf) 
+{
+    char *end = parser_parse_end_of_line(server->client_info->input_buf->str);
     
-    char *eol = strstr(client_info->input_buf->str, EOL);
-    size_t eol_size = sizeof(EOL) - 1;
-    eol += eol_size;
 
-    if (eol) {
-        size_t message_size = eol - client_info->input_buf->str;
+    if (end) {
+        size_t end_size = PARSER_EOL_SIZE;
+        end += end_size;
+        size_t message_size = end - server->client_info->input_buf->str;
 
-        parser_result_t * p_res = parser_parse(server->parser, client_info->input_buf->str, message_size);
+        parser_result_t * p_res = parser_parse(server->parser, server->client_info->input_buf->str, message_size);
         process_parser_result(server, p_res);
         parser_result_free(p_res);
-        client_info_trim_input_buf(client_info, message_size + eol_size);
+        client_info_trim_input_buf(server->client_info, message_size + end_size);
     }
-
-    return received;
 }
 
 int send_to_client(server_t *server)
@@ -366,14 +395,14 @@ int is_in_state(server_t *server, te_server_fsm_state state)
     return server->client_info->fsm_state == state;
 }
 
+
+
 void process_parser_result(server_t *server, parser_result_t *result)
 {
     if (result == NULL) {
         server_fsm_step(server->client_info->fsm_state, SERVER_FSM_EV_SYNTAX_ERROR, server, NULL);
         return;
     }
-
-
     switch (result->smtp_cmd)
     {
     case SMTP_HELO_CMD:
@@ -409,3 +438,5 @@ void process_parser_result(server_t *server, parser_result_t *result)
     if (is_in_state(server, SERVER_FSM_ST_INVALID))
         log_error(server->logger, "[WORKER %d] error in server_fsm_step with cmd %d.", getpid(), result->smtp_cmd);
 }
+
+

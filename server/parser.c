@@ -41,7 +41,6 @@ parser_t *parser_init()
 
 parser_result_t *parser_parse(parser_t *parser, char* msg, int msg_len) 
 {
-    printf("\n TRY FIND MATCH FOR %s \n", msg);
     int ovector[OVECSIZE];
 
     for (int i = 0; i < SMTP_CMD_CNT; i++) {
@@ -56,9 +55,8 @@ parser_result_t *parser_parse(parser_t *parser, char* msg, int msg_len)
             if (!parser)
                 return NULL; 
 
-            printf("\n There's a match with cmd #%d\n",i);
             result->smtp_cmd = i; // cmds and regexps in compiled_regexps indexes are equal 
-            
+            result->data = NULL;
             if (res > 1) {
                 const char *text = NULL;
                 // get text after cmd
@@ -95,4 +93,14 @@ void parser_result_free(parser_result_t *result)
         string_free(result->data);
         free(result);
     }
+}
+
+char* parser_parse_end_of_line(char* msg)
+{
+    return strstr(msg, PARSER_EOL);
+}
+
+char* parser_parse_end_of_mail(char* msg)
+{
+    return strstr(msg, PARSER_EOM);
 }

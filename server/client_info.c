@@ -30,6 +30,7 @@ client_info_t *client_info_init()
     }
     client_info->last_message_time = time(NULL);
     client_info->fsm_state = SERVER_FSM_ST_INIT;
+    client_info->mail = NULL;
 
     return client_info;
 }
