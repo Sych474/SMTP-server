@@ -4,6 +4,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <CUnit/Basic.h>
 
 int test_maildir();
 
