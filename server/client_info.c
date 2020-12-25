@@ -38,7 +38,7 @@ client_info_t *client_info_init()
 int client_info_set_output_buf(client_info_t *client_info, char *output, size_t len)
 {
     string_clear(client_info->output_buf);
-    return string_copy(client_info->output_buf, output, len, 0);
+    return string_set(client_info->output_buf, output, len, 0);
 }
 
 int client_info_concat_input_buf(client_info_t *client_info, char *input, size_t len)

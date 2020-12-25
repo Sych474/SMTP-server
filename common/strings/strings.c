@@ -80,12 +80,21 @@ void string_begining_trim(string_t *str, size_t trim)
     memset(str->str + str->str_size - trim, 0, trim); 
 }
 
-int string_copy(string_t *dst, char *src, size_t len, size_t offset) 
+int string_set(string_t *dst, char *src, size_t len, size_t offset) 
 {
     if (string_expand_memory_to(dst, len) < 0)
         return -1; 
     
-    memcpy(dst->str, src + offset, len);
+    memcpy(dst->str, src + offset, len - offset);
+    return 0;
+}
+
+int string_insert(string_t *dst, char *src, size_t len, size_t offset)
+{
+    if (string_expand_memory_to(dst, strlen(dst->str) + len) < 0)
+        return -1; 
+    
+    memcpy(dst->str + offset, src, len);
     return 0;
 }
 
