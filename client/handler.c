@@ -207,3 +207,6 @@ te_client_state HANDLE_STATE_SEND_EHLO_EVENT_GOT_EHLO_RESPONSE_MULTILINE(te_clie
 
 
 te_client_state HANDLE_STATE_RECEIVE_SMTP_GREETING_EVENT_SEND_HELO(te_client_state nxtSt){printf("\n new state - %u", nxtSt); return nxtSt;}
+
+te_client_state HANDLE_IDLE(te_client_state nxtSt){printf("\n new idle state - %u", nxtSt); return nxtSt;}
+

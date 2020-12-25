@@ -44,3 +44,4 @@ void start_poll(client_t *client);
 void write_to_server(client_t *client);
 void client_fill_pollout(client_t *client, int index, int fd);
 void client_stop(client_t *client);
+void send_data_body(client_t *client, string_t *newMessage, int serverid);

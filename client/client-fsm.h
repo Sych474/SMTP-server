@@ -90,7 +90,7 @@ typedef enum {
  *
  *  Count of the valid transition events
  */
-#define CLIENT_EVENT_CT 19
+#define CLIENT_EVENT_CT 20
 typedef enum {
     CLIENT_EV_EVENT_CONNECTED,
     CLIENT_EV_EVENT_SEND_EHLO,
@@ -111,6 +111,7 @@ typedef enum {
     CLIENT_EV_EVENT_SEND_RESET,
     CLIENT_EV_EVENT_ERROR,
     CLIENT_EV_EVENT_RECEIVE_SMTP_GREETING,
+    CLIENT_EV_EVENT_STAY_IDLE,
     CLIENT_EV_INVALID
 } te_client_event;
 

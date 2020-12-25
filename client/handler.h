@@ -83,3 +83,6 @@ te_client_state HANDLE_STATE_SEND_EHLO_EVENT_GOT_EHLO_NOT_SUPPORTED(te_client_st
 te_client_state HANDLE_STATE_SEND_EHLO_EVENT_GOT_EHLO_RESPONSE_MULTILINE(te_client_state nxtSt);
 
 te_client_state HANDLE_STATE_RECEIVE_SMTP_GREETING_EVENT_SEND_HELO(te_client_state nxtSt);
+
+
+te_client_state HANDLE_IDLE(te_client_state nxtSt);
