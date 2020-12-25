@@ -1,6 +1,5 @@
-#include "client-fsm.h"
 #include <stdio.h>
-
+#include "client.h"
 te_client_state  HANDLE_INIT_EVENT_ERROR(te_client_state nxtSt);
 
 
@@ -25,7 +24,7 @@ te_client_state HANDLE_STATE_READY_TO_SEND_NEXT_MESSAGE_EVENT_ERROR(te_client_st
 te_client_state HANDLE_STATE_READY_TO_SEND_NEXT_MESSAGE_EVENT_SEND_NEXT_MESSAGE(te_client_state nxtSt);
 te_client_state HANDLE_STATE_READY_TO_SEND_NEXT_MESSAGE_EVENT_SEND_RESET(te_client_state nxtSt);
 te_client_state HANDLE_STATE_RECEIVE_DATA_RESPONSE_EVENT_ERROR(te_client_state nxtSt);
-te_client_state HANDLE_STATE_RECEIVE_DATA_RESPONSE_EVENT_SEND_MESSAGE_BODY(te_client_state nxtSt);
+te_client_state HANDLE_STATE_RECEIVE_DATA_RESPONSE_EVENT_SEND_MESSAGE_BODY(te_client_state nxtSt, client_t *client,int serverid,string_t *newMessage,int len);
 te_client_state HANDLE_STATE_RECEIVE_DATA_RESPONSE_EVENT_SEND_RESET(te_client_state nxtSt);
 te_client_state HANDLE_STATE_RECEIVE_EHLO_MULTILINE_RESPONSE_EVENT_ERROR(te_client_state nxtSt);
 te_client_state HANDLE_STATE_RECEIVE_EHLO_MULTILINE_RESPONSE_EVENT_SEND_RESET(te_client_state nxtSt);
@@ -66,7 +65,7 @@ te_client_state HANDLE_STATE_SEND_MESSAGE_BODY_EVENT_ERROR(te_client_state nxtSt
 te_client_state HANDLE_STATE_SEND_MESSAGE_BODY_EVENT_GOT_OK(te_client_state nxtSt);
 te_client_state HANDLE_STATE_SEND_MESSAGE_BODY_EVENT_SEND_RESET(te_client_state nxtSt);
 te_client_state HANDLE_STATE_SEND_QUIT_EVENT_ERROR(te_client_state nxtSt);
-te_client_state HANDLE_STATE_SEND_QUIT_EVENT_GOT_QUIT_RESPONSE(te_client_state nxtSt);
+te_client_state HANDLE_STATE_SEND_QUIT_EVENT_GOT_QUIT_RESPONSE(te_client_state nxtSt,client_t *client,int serverid);
 te_client_state HANDLE_STATE_SEND_QUIT_EVENT_SEND_RESET(te_client_state nxtSt);
 te_client_state HANDLE_STATE_SEND_RCPT_TO_EVENT_ERROR(te_client_state nxtSt);
 te_client_state HANDLE_STATE_SEND_RCPT_TO_EVENT_GOT_OK(te_client_state nxtSt);
@@ -86,3 +85,6 @@ te_client_state HANDLE_STATE_RECEIVE_SMTP_GREETING_EVENT_SEND_HELO(te_client_sta
 
 
 te_client_state HANDLE_IDLE(te_client_state nxtSt);
+
+te_client_state HANDLE_SEND_CMD(te_client_state nxtSt, client_t *client,int serverid,char *currentMessage,int len );
+

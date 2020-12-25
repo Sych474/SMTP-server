@@ -126,7 +126,7 @@ client_step(
     te_client_event trans_evt,
     int server,
     void* client,
-    const char *data,
+    void* data,
     int len );
 
 #endif /* AUTOFSM_CLIENT_FSM_H_GUARD */

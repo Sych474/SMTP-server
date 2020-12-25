@@ -87,8 +87,35 @@ te_client_state HANDLE_STATE_RECEIVE_DATA_RESPONSE_EVENT_ERROR(te_client_state n
 
 }
 
-te_client_state HANDLE_STATE_RECEIVE_DATA_RESPONSE_EVENT_SEND_MESSAGE_BODY(te_client_state nxtSt)
-{ printf("\n new state - %u", nxtSt); return nxtSt;
+te_client_state HANDLE_STATE_RECEIVE_DATA_RESPONSE_EVENT_SEND_MESSAGE_BODY(te_client_state nxtSt, client_t *client,int serverid,string_t *currentMessage,int len)
+{ 
+
+    printf("current mess '%s'",currentMessage->str);
+    char buffer[BUFFER_SIZE];
+    while(1)
+    {
+            memset(buffer,0,sizeof(buffer));
+            printf("your data message for server %i (to quit write 'exit' anywhere in the message):\n",serverid);
+            scanf(" %[^\n]", buffer);
+            printf("ur print '%s'",buffer);
+
+            string_concat(currentMessage,buffer,strlen(buffer));
+            printf("\nur message '%s'\n",currentMessage->str);
+            if (strstr(currentMessage->str,"exit"))
+            {
+                if (write(client->fd[serverid].fd,currentMessage->str,currentMessage->str_size) <= 0)
+                {
+                    on_error("cannot write to server");
+                }
+                client->fd[serverid].events=POLLIN;
+                break;
+            }
+    }
+
+
+
+
+    return nxtSt;
 
 }
 te_client_state HANDLE_STATE_RECEIVE_DATA_RESPONSE_EVENT_SEND_RESET(te_client_state nxtSt)
@@ -189,7 +216,23 @@ te_client_state HANDLE_STATE_SEND_MESSAGE_BODY_EVENT_ERROR(te_client_state nxtSt
 te_client_state HANDLE_STATE_SEND_MESSAGE_BODY_EVENT_GOT_OK(te_client_state nxtSt){ printf("\n new state - %u", nxtSt); return nxtSt;}
 te_client_state HANDLE_STATE_SEND_MESSAGE_BODY_EVENT_SEND_RESET(te_client_state nxtSt){ printf("\n new state - %u", nxtSt); return nxtSt;}
 te_client_state HANDLE_STATE_SEND_QUIT_EVENT_ERROR(te_client_state nxtSt){ printf("\n new state - %u", nxtSt); return nxtSt;}
-te_client_state HANDLE_STATE_SEND_QUIT_EVENT_GOT_QUIT_RESPONSE(te_client_state nxtSt){ printf("\n new state - %u", nxtSt); return nxtSt;}
+
+
+te_client_state HANDLE_STATE_SEND_QUIT_EVENT_GOT_QUIT_RESPONSE(te_client_state nxtSt,client_t *client,int serverid)
+{ 
+    printf("closing server #%d\n",serverid);
+    if(close(client->fd[serverid].fd)!=0)
+    {
+            on_error("error closing socket");
+    }
+
+    printf("\n new state - %u", nxtSt); return nxtSt;
+
+    
+    
+}
+
+
 te_client_state HANDLE_STATE_SEND_QUIT_EVENT_SEND_RESET(te_client_state nxtSt){ printf("\n new state - %u", nxtSt); return nxtSt;}
 te_client_state HANDLE_STATE_SEND_RCPT_TO_EVENT_ERROR(te_client_state nxtSt){ printf("\n new state - %u", nxtSt); return nxtSt;}
 te_client_state HANDLE_STATE_SEND_RCPT_TO_EVENT_GOT_OK(te_client_state nxtSt){ printf("\n new state - %u", nxtSt); return nxtSt;}
@@ -210,3 +253,15 @@ te_client_state HANDLE_STATE_RECEIVE_SMTP_GREETING_EVENT_SEND_HELO(te_client_sta
 
 te_client_state HANDLE_IDLE(te_client_state nxtSt){printf("\n new idle state - %u", nxtSt); return nxtSt;}
 
+
+
+te_client_state HANDLE_SEND_CMD(te_client_state nxtSt, client_t *client,int serverid,char *currentMessage,int len )
+{
+    printf("\nim here in handle_send '%s'",currentMessage);
+        if (write(client->fd[serverid].fd,currentMessage,len) <= 0)
+        {
+            on_error("cannot write to server");
+        }
+        client->fd[serverid].events=POLLIN;
+    return nxtSt;
+}
