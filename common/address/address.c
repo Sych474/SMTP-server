@@ -1,12 +1,22 @@
 #include "address.h"
 
-address_t *address_init(string_t *str, address_type_t type)
+#define LOCAL_USERS_COUNT 2
+
+const char *local_users[LOCAL_USERS_COUNT] = {
+    "max@local.com", 
+    "alex@local.com"
+};
+
+address_type_t get_address_type(char *str); 
+
+address_t *address_init(string_t *str)
 {
+    //TODO приведение адреса к единому виду
     address_t *address = malloc(sizeof(address_t));
     if (!address)
         return NULL; 
     address->str = str;
-    address->type = type;
+    address->type = get_address_type(str->str); //TODO использовать приведенную к стандарту строку
 
     return address;
 }
@@ -30,4 +40,13 @@ string_t *address_get_username(address_t *address)
     size_t username_size = end - address_get_str(address);
 
     return string_create(username_size, address_get_str(address));
+}
+
+address_type_t get_address_type(char *str)
+{
+    for (size_t i = 0; i < LOCAL_USERS_COUNT; i++) {
+        if (strcmp(str, local_users[i]) == 0)
+            return ADDRESS_TYPE_LOCAL;
+    }
+    return ADDRESS_TYPE_REMOTE;
 }

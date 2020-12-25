@@ -260,12 +260,12 @@ void recv_mail_from_client(server_t *server, char *buf)
         end += end_size;
 
         size_t message_size = end - server->client_info->input_buf->str;
-        server->client_info->mail = string_create(message_size, server->client_info->input_buf->str);
+        server->client_info->mail->data = string_create(message_size, server->client_info->input_buf->str);
         client_info_trim_input_buf(server->client_info, message_size + end_size);
         
         if (!server->client_info->mail) {
             log_error(server->logger, "[WORKER %d] error on memory allocation.", getpid());
-            //TODO add additional error handlong
+            //TODO add additional error handling
         }
 
         server_fsm_step(server->client_info->fsm_state, SERVER_FSM_EV_MAIL_END, server, NULL);
@@ -282,7 +282,6 @@ void recv_mail_from_client(server_t *server, char *buf)
 void recv_cmd_from_client(server_t *server, char *buf) 
 {
     char *end = parser_parse_end_of_line(server->client_info->input_buf->str);
-    
 
     if (end) {
         size_t end_size = PARSER_EOL_SIZE;

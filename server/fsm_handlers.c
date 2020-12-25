@@ -44,7 +44,22 @@ te_server_fsm_state fsm_handle_mail(server_t* server, string_t *data, te_server_
         log_error(server->logger, "[WORKER %d] error in server_set_output_buf.", getpid());
         return client_info_set_state(server->client_info, SERVER_FSM_EV_INVALID);
     }
+    mail_free(server->client_info->mail);
+    server->client_info->mail = mail_init();
+    
+    if (!server->client_info->mail) {
+        log_error(server->logger, "[WORKER %d] error in allocating mail.", getpid());
+        return client_info_set_state(server->client_info, SERVER_FSM_EV_INVALID);
+    }
 
+    address_t *address = address_init(data);
+    if (!address) {
+        log_error(server->logger, "[WORKER %d] error in allocating mail.", getpid());
+        return client_info_set_state(server->client_info, SERVER_FSM_EV_INVALID);
+    }
+
+    server->client_info->mail->from = address;
+    string_free(data);
     return client_info_set_state(server->client_info, next_state);
 }
 
@@ -57,6 +72,15 @@ te_server_fsm_state fsm_handle_rcpt(server_t* server, string_t *data, te_server_
         return client_info_set_state(server->client_info, SERVER_FSM_EV_INVALID);
     }
 
+    address_t *address = address_init(data);
+    if (!address) {
+        log_error(server->logger, "[WORKER %d] error in allocating mail.", getpid());
+        return client_info_set_state(server->client_info, SERVER_FSM_EV_INVALID);
+    }
+
+    //TODO process rcpt max count 
+    mail_add_rcpt(server->client_info->mail, address);
+    string_free(data);
     return client_info_set_state(server->client_info, next_state);
 }
 
@@ -71,7 +95,7 @@ te_server_fsm_state fsm_handle_data(server_t* server, te_server_fsm_state next_s
     return client_info_set_state(server->client_info, next_state);
 }
 
-te_server_fsm_state fsm_handle_mail_end(server_t* server, string_t *data, te_server_fsm_state next_state)
+te_server_fsm_state fsm_handle_mail_end(server_t* server, te_server_fsm_state next_state)
 {
     log_info(server->logger, "[WORKER %d] END OF DATA, next state: %d", getpid(), next_state);
 
@@ -79,6 +103,12 @@ te_server_fsm_state fsm_handle_mail_end(server_t* server, string_t *data, te_ser
         log_error(server->logger, "[WORKER %d] error in server_set_output_buf.", getpid());
         return client_info_set_state(server->client_info, SERVER_FSM_EV_INVALID);
     }
+
+    if (maildir_save_mail(server->client_info->mail, SERVER_MAIL_DIR, server->logger) < 0){
+        log_error(server->logger, "[WORKER %d] error in maildir_save_mail.", getpid());
+        return client_info_set_state(server->client_info, SERVER_FSM_EV_INVALID);
+    }
+
     return client_info_set_state(server->client_info, next_state);
 }
 

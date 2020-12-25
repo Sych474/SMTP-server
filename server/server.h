@@ -34,6 +34,8 @@
 #define END_SIGNAL              "exit"
 #define SERVER_TIMEOUT          300
 
+#define SERVER_MAIL_DIR         "./test_mail"
+
 typedef struct server_struct {    
 
     logger_t *logger;

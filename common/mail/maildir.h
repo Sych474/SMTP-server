@@ -13,6 +13,6 @@
 #define MAILDIR_CUR "maildir/cur"
 #define MAILDIR_HOSTNAME "smtp_serv"
 
-int maildir_write_mail(mail_t *mail, char *base_mail_dir, logger_t *logger); 
+int maildir_save_mail(mail_t *mail, char *base_mail_dir, logger_t *logger); 
 
 #endif

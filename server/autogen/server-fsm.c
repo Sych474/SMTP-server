@@ -390,7 +390,7 @@ server_fsm_step(
 
     case SERVER_FSM_TR_MAIL_RECEIVED:
         /* START == MAIL_RECEIVED == DO NOT CHANGE THIS COMMENT */
-        nxtSt = fsm_handle_mail_end(server, data_str, nxtSt);
+        nxtSt = fsm_handle_mail_end(server, nxtSt);
         /* END   == MAIL_RECEIVED == DO NOT CHANGE THIS COMMENT */
         break;
 
