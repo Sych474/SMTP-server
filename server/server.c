@@ -394,8 +394,6 @@ int is_in_state(server_t *server, te_server_fsm_state state)
     return server->client_info->fsm_state == state;
 }
 
-
-
 void process_parser_result(server_t *server, parser_result_t *result)
 {
     if (result == NULL) {

@@ -1,11 +1,6 @@
 #include "address.h"
 
-#define LOCAL_USERS_COUNT 2
-
-const char *local_users[LOCAL_USERS_COUNT] = {
-    "max@local.com", 
-    "alex@local.com"
-};
+const char *local_domain = "local.com";
 
 address_type_t get_address_type(char *str); 
 
@@ -17,7 +12,6 @@ address_t *address_init(string_t *str)
         return NULL; 
     address->str = str;
     address->type = get_address_type(str->str); //TODO использовать приведенную к стандарту строку
-
     return address;
 }
 
@@ -44,9 +38,7 @@ string_t *address_get_username(address_t *address)
 
 address_type_t get_address_type(char *str)
 {
-    for (size_t i = 0; i < LOCAL_USERS_COUNT; i++) {
-        if (strcmp(str, local_users[i]) == 0)
-            return ADDRESS_TYPE_LOCAL;
-    }
-    return ADDRESS_TYPE_REMOTE;
+    char *domain = strstr(str, local_domain);
+
+    return domain == NULL ? ADDRESS_TYPE_REMOTE : ADDRESS_TYPE_LOCAL;
 }

@@ -38,49 +38,52 @@ te_server_fsm_state fsm_handle_ehlo(server_t* server, te_server_fsm_state next_s
 
 te_server_fsm_state fsm_handle_mail(server_t* server, string_t *data, te_server_fsm_state next_state)
 {
-    log_info(server->logger, "[WORKER %d] get MAIL FROM cmd, next state: %d", getpid(), next_state);
-
-    if (server_set_output_buf(server, SMTP_MSG_MAIL, strlen(SMTP_MSG_MAIL)) < 0) {
-        log_error(server->logger, "[WORKER %d] error in server_set_output_buf.", getpid());
-        return client_info_set_state(server->client_info, SERVER_FSM_EV_INVALID);
-    }
     mail_free(server->client_info->mail);
     server->client_info->mail = mail_init();
     
     if (!server->client_info->mail) {
         log_error(server->logger, "[WORKER %d] error in allocating mail.", getpid());
+        string_free(data);
         return client_info_set_state(server->client_info, SERVER_FSM_EV_INVALID);
     }
 
+    printf("DATA: %s\n", data->str);
     address_t *address = address_init(data);
     if (!address) {
         log_error(server->logger, "[WORKER %d] error in allocating mail.", getpid());
+        string_free(data);
         return client_info_set_state(server->client_info, SERVER_FSM_EV_INVALID);
     }
 
     server->client_info->mail->from = address;
-    string_free(data);
+    log_info(server->logger, "[WORKER %d] get MAIL FROM cmd, address: %s; next state: %d", getpid(), address_get_str(address), next_state);
+
+    if (server_set_output_buf(server, SMTP_MSG_MAIL, strlen(SMTP_MSG_MAIL)) < 0) {
+        log_error(server->logger, "[WORKER %d] error in server_set_output_buf.", getpid());
+        return client_info_set_state(server->client_info, SERVER_FSM_EV_INVALID);
+    }
+    
     return client_info_set_state(server->client_info, next_state);
 }
 
 te_server_fsm_state fsm_handle_rcpt(server_t* server, string_t *data, te_server_fsm_state next_state)
 {
-    log_info(server->logger, "[WORKER %d] get RCPT cmd, next state: %d", getpid(), next_state);
+    address_t *address = address_init(data);
+    if (!address) {
+        log_error(server->logger, "[WORKER %d] error in allocating mail.", getpid());
+        string_free(data);
+        return client_info_set_state(server->client_info, SERVER_FSM_EV_INVALID);
+    }
+
+    //TODO process rcpt max count 
+    mail_add_rcpt(server->client_info->mail, address);
+    log_info(server->logger, "[WORKER %d] get RCPT cmd, address: %s; next state: %d", getpid(), address_get_str(address), next_state);
 
     if (server_set_output_buf(server, SMTP_MSG_RCPT, strlen(SMTP_MSG_RCPT)) < 0) {
         log_error(server->logger, "[WORKER %d] error in server_set_output_buf.", getpid());
         return client_info_set_state(server->client_info, SERVER_FSM_EV_INVALID);
     }
 
-    address_t *address = address_init(data);
-    if (!address) {
-        log_error(server->logger, "[WORKER %d] error in allocating mail.", getpid());
-        return client_info_set_state(server->client_info, SERVER_FSM_EV_INVALID);
-    }
-
-    //TODO process rcpt max count 
-    mail_add_rcpt(server->client_info->mail, address);
-    string_free(data);
     return client_info_set_state(server->client_info, next_state);
 }
 
@@ -104,7 +107,8 @@ te_server_fsm_state fsm_handle_mail_end(server_t* server, te_server_fsm_state ne
         return client_info_set_state(server->client_info, SERVER_FSM_EV_INVALID);
     }
 
-    if (maildir_save_mail(server->client_info->mail, SERVER_MAIL_DIR, server->logger) < 0){
+    if (maildir_save_mail(server->client_info->mail, SERVER_MAIL_DIR, server->logger) < 0) {
+        printf("HERE\n");
         log_error(server->logger, "[WORKER %d] error in maildir_save_mail.", getpid());
         return client_info_set_state(server->client_info, SERVER_FSM_EV_INVALID);
     }

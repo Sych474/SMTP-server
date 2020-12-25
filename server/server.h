@@ -22,8 +22,8 @@
 
 #define BUFFER_SIZE             1024
 
-#define POLL_FDS_COUNT           3
-#define POLL_TIMEOUT             10
+#define POLL_FDS_COUNT          3
+#define POLL_TIMEOUT            10
 #define POLL_ERROR              -1
 #define POLL_EXPIRE             0
 #define POLL_FDS_SERVER         0

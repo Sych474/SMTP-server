@@ -52,4 +52,5 @@ Mkfile.old
 dkms.conf
 
 build
+test_build
 log.log

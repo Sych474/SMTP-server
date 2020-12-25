@@ -10,6 +10,7 @@ char *get_maildir_filename();
 
 int maildir_save_mail(mail_t *mail, char *base_mail_dir, logger_t *logger)
 {
+    printf("maildir_save_mail IN\n");
     int saved_remote = 0;
     for (size_t i = 0; i < mail->rcpts_cnt; i++) {
         if(mail->rcpts[i]->type == ADDRESS_TYPE_LOCAL)
@@ -17,22 +18,30 @@ int maildir_save_mail(mail_t *mail, char *base_mail_dir, logger_t *logger)
                 return -1;
         
         if (!saved_remote && mail->rcpts[i]->type == ADDRESS_TYPE_REMOTE) {
-            if (maildir_save_mail_internal(mail, NULL, base_mail_dir, logger) < 0)
+            printf("ADDRESS_TYPE_REMOTE\n");
+            int res = maildir_save_mail_internal(mail, NULL, base_mail_dir, logger);
+            printf("res: %d\n", res);
+            if (res < 0)
                 return -1;
             saved_remote = 1; 
         }
     }
-    
+    printf("maildir_save_mail OUT\n");
+
     return 0;
 }
 
 int maildir_save_mail_internal(mail_t *mail, address_t *address, char *base_mail_dir, logger_t *logger)
 {
+    printf("maildir_save_mail_internal IN\n");
     char *filename = get_maildir_filename();
+    printf("filename: %s\n", filename);
     char* tmp_dir = get_maildir_dir(base_mail_dir, address, MAILDIR_TMP);
-    char* new_dir = get_maildir_dir(base_mail_dir, address, MAILDIR_TMP);
+    printf("tmp_dir: %s\n", tmp_dir);
+    char* new_dir = get_maildir_dir(base_mail_dir, address, MAILDIR_NEW);
+    printf("new_dir: %s\n", new_dir);
 
-    if (!filename || !tmp_dir || !new_dir) {
+    if (filename == NULL || tmp_dir == NULL || new_dir == NULL) {
         if (filename)
             free(filename);
         if (tmp_dir)
@@ -42,9 +51,10 @@ int maildir_save_mail_internal(mail_t *mail, address_t *address, char *base_mail
         return -1; 
     }
 
+
     create_dir_if_not_exists(tmp_dir);
     create_dir_if_not_exists(new_dir);
-
+    printf("create_dir_if_not_exists\n");
 
     char *tmp_filename = concat_dir_and_filename(tmp_dir, filename);
     char *new_filename = concat_dir_and_filename(new_dir, filename);
@@ -52,7 +62,7 @@ int maildir_save_mail_internal(mail_t *mail, address_t *address, char *base_mail
     free(tmp_dir);
     free(new_dir);
     
-    if (!tmp_filename || !new_filename) {
+    if (tmp_filename == NULL || new_filename == NULL) {
         if (tmp_filename)
             free(tmp_filename);
         if (new_filename)
@@ -65,11 +75,13 @@ int maildir_save_mail_internal(mail_t *mail, address_t *address, char *base_mail
         free(new_filename);
         return -1;     
     }
+    printf("mail writed\n");
 
     rename(tmp_filename, new_filename);
 
     free(tmp_filename);
     free(new_filename);
+    printf("maildir_save_mail_internal OUT\n");
     return 0;
 }
 
@@ -77,7 +89,7 @@ char *concat_dir_and_filename(char *dir, char *filename)
 {
     size_t len = strlen(dir) + strlen(filename) + 2;
     char *res = malloc(sizeof(char) * len);
-    if (!res)
+    if (res == NULL)
         return NULL; 
         
     snprintf(filename, len, "%s/%s", dir, filename);
@@ -89,14 +101,14 @@ char *get_maildir_dir(char *base_mail_dir, address_t *address, char *final_dir)
     char *filename;
     int filename_len;
     
-    if (address) {
+    if (address != NULL) {
         string_t *username = address_get_username(address);
-        if (!username)
+        if (username == NULL)
             return NULL; 
 
         filename_len = strlen(base_mail_dir) + strlen(final_dir) + strlen(username->str) + 3;
         filename = malloc(sizeof(char) * filename_len);
-        if (!filename)
+        if (filename == NULL)
             return NULL; 
         
         snprintf(filename, filename_len, "%s/%s/%s,", base_mail_dir, username->str, final_dir);
@@ -107,7 +119,7 @@ char *get_maildir_dir(char *base_mail_dir, address_t *address, char *final_dir)
         
         filename_len = strlen(base_mail_dir) + strlen(final_dir) + strlen(address_get_str(address)) + 2;
         filename = malloc(sizeof(char) * filename_len);
-        if (!filename)
+        if (filename == NULL)
             return NULL; 
         
         snprintf(filename, filename_len, "%s/%s", base_mail_dir, final_dir);

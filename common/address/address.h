@@ -4,8 +4,8 @@
 #include "../strings/strings.h"
 
 typedef enum address_type_enum {
-    ADDRESS_TYPE_LOCAL = 0,
-    ADDRESS_TYPE_REMOTE = 1, 
+    ADDRESS_TYPE_LOCAL = 1,
+    ADDRESS_TYPE_REMOTE = 2, 
 } address_type_t;
 
 typedef struct address_struct
