@@ -2,8 +2,10 @@
 #include <stdio.h>
 
 #include "maildir_test.h"
+#include "mail_test.h"
 #include "address_test.h"
 #include "strings_test.h"
+
 #include <CUnit/Basic.h>
 #include <CUnit/Automated.h>
 
@@ -34,6 +36,16 @@ int main (int argc, char *argv[])
         return CU_get_error();
     }
     if ((result = strings_test_fill_suite(strings_suite)) != CUE_SUCCESS) {
+        CU_cleanup_registry();
+        return result;
+    }
+
+    CU_pSuite mail_suite = CU_add_suite("Mail unit tests", mail_test_init, mail_test_free);
+    if (!mail_suite) {
+        CU_cleanup_registry();
+        return CU_get_error();
+    }
+    if ((result = mail_test_fill_suite(mail_suite)) != CUE_SUCCESS) {
         CU_cleanup_registry();
         return result;
     }

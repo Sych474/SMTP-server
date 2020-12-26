@@ -4,7 +4,7 @@
 #define TEST_ADDRESS_REMOTE_ADDR "addr@other.ru"
 #define TEST_LOCAL_DOMAIN "test.ru"
 
-void address_test_init_local() 
+void address_init_test_local() 
 {
     // Arrange
     string_t *str = string_create(TEST_ADDRESS_LOCAL_ADDR, sizeof(TEST_ADDRESS_LOCAL_ADDR));
@@ -20,7 +20,7 @@ void address_test_init_local()
     address_free(address);
 }
 
-void address_test_init_remote() 
+void address_init_test_remote() 
 {
     // Arrange
     string_t *str = string_create(TEST_ADDRESS_REMOTE_ADDR, sizeof(TEST_ADDRESS_REMOTE_ADDR));
@@ -36,7 +36,7 @@ void address_test_init_remote()
     address_free(address); 
 }
 
-void address_test_get_str()
+void address_get_str_test()
 {
     // Arrange 
     string_t *str = string_create(TEST_ADDRESS_LOCAL_ADDR, sizeof(TEST_ADDRESS_LOCAL_ADDR));
@@ -52,7 +52,7 @@ void address_test_get_str()
     address_free(address);
 }
 
-void address_test_get_username()
+void address_get_username_test()
 {
     // Arrange 
     string_t *str = string_create(TEST_ADDRESS_LOCAL_ADDR, sizeof(TEST_ADDRESS_LOCAL_ADDR));
@@ -69,12 +69,22 @@ void address_test_get_username()
     string_free(user);
 }
 
+void address_free_test_for_null()
+{
+    // Arrange 
+    address_t *address = NULL;
+    
+    // Act & Assert
+    address_free(address);    
+}
+
 int address_test_fill_suite(CU_pSuite suite) 
 {
-    if (!CU_add_test(suite, "address_get_str test", address_test_get_str) ||
-        !CU_add_test(suite, "address_get_username test", address_test_get_username) ||
-        !CU_add_test(suite, "address_init local test", address_test_init_local) ||
-        !CU_add_test(suite, "address_init remote test", address_test_init_remote))
+    if (!CU_add_test(suite, "address_get_str test", address_get_str_test) ||
+        !CU_add_test(suite, "address_get_username test", address_get_username_test) ||
+        !CU_add_test(suite, "address_init local test", address_init_test_local) ||
+        !CU_add_test(suite, "address_init remote test", address_init_test_local) ||
+        !CU_add_test(suite, "address_free test for null", address_free_test_for_null))
         return CU_get_error();
 
     return CUE_SUCCESS;

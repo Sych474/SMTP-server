@@ -36,6 +36,7 @@ int string_expand_memory(string_t *str)
     if (new_str == NULL)
         return -1; 
 
+    memset(new_str, 0, new_str_size);
     memcpy(new_str, str->str, str->str_size);
     free(str->str);
     

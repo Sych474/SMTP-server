@@ -114,7 +114,6 @@ void string_set_test_with_offset()
     string_set(str, TEST_STR_SET, strlen(TEST_STR_SET), TEST_STR_SET_OFFSET);
 
     // Assert
-    printf("\n\n%s\n\n", str->str);
     CU_ASSERT_STRING_EQUAL(str->str, TEST_STR_SET_WITH_OFFSET);
 
     // Finalize
@@ -155,6 +154,14 @@ void string_clear_test()
     string_free(str);
 }
 
+void strings_free_test_for_null()
+{
+    // Arrange 
+    string_t *str = NULL;
+    
+    // Act & Assert
+    string_free(str);    
+}
 
 int strings_test_fill_suite(CU_pSuite suite) 
 {
@@ -166,7 +173,8 @@ int strings_test_fill_suite(CU_pSuite suite)
         !CU_add_test(suite, "string_set simple test", string_set_test) ||
         !CU_add_test(suite, "string_set test with offset", string_set_test_with_offset) ||
         !CU_add_test(suite, "string_set test with set smaller str", string_set_test_lower) ||
-        !CU_add_test(suite, "string_clear test", string_clear_test))
+        !CU_add_test(suite, "string_clear test", string_clear_test) ||
+        !CU_add_test(suite, "string_free test for null", strings_free_test_for_null))
         return CU_get_error();
 
     return CUE_SUCCESS;
