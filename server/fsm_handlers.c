@@ -48,7 +48,7 @@ te_server_fsm_state fsm_handle_mail(server_t* server, string_t *data, te_server_
     }
 
     printf("DATA: %s\n", data->str);
-    address_t *address = address_init(data);
+    address_t *address = address_init(data, LOCAL_DOMAIN);
     if (!address) {
         log_error(server->logger, "[WORKER %d] error in allocating mail.", getpid());
         string_free(data);
@@ -68,7 +68,7 @@ te_server_fsm_state fsm_handle_mail(server_t* server, string_t *data, te_server_
 
 te_server_fsm_state fsm_handle_rcpt(server_t* server, string_t *data, te_server_fsm_state next_state)
 {
-    address_t *address = address_init(data);
+    address_t *address = address_init(data, LOCAL_DOMAIN);
     if (!address) {
         log_error(server->logger, "[WORKER %d] error in allocating mail.", getpid());
         string_free(data);

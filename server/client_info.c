@@ -16,13 +16,13 @@ client_info_t *client_info_init()
         return NULL;
 
 
-    client_info->input_buf = string_allocate(CLIENT_INFO_START_BUFFER_SIZE);
+    client_info->input_buf = string_init(CLIENT_INFO_START_BUFFER_SIZE);
     if (!client_info->input_buf) {
         free(client_info);
         return NULL;
     }
 
-    client_info->output_buf = string_allocate(CLIENT_INFO_START_BUFFER_SIZE);
+    client_info->output_buf = string_init(CLIENT_INFO_START_BUFFER_SIZE);
     if (!client_info->output_buf) {
         client_info_finalize(client_info);
         free(client_info);
@@ -37,7 +37,6 @@ client_info_t *client_info_init()
 
 int client_info_set_output_buf(client_info_t *client_info, char *output, size_t len)
 {
-    string_clear(client_info->output_buf);
     return string_set(client_info->output_buf, output, len, 0);
 }
 

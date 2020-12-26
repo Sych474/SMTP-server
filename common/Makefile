@@ -1,6 +1,6 @@
 CC 				:= gcc
 CFLAGS 			:= -std=c99 -g -g3 -O0 -Wall -Werror -pedantic -D_GNU_SOURCE
-CFLAGS_END		:= -lpcre -lm
+CFLAGS_END		:= -lpcre -lm  -lcunit
 
 BUILD_DIR 		:= build
 
@@ -16,6 +16,7 @@ VPATH := $(SRC_DIRS)
 all:
 	mkdir -p $(BUILD_DIR)
 	make test --directory=$(BUILD_DIR) --makefile=../Makefile
+	./$(BUILD_DIR)/test
 
 test: $(OBJ_FILES)
 	$(CC) $(CFLAGS) $^ -o $@ $(CFLAGS_END)

@@ -260,7 +260,7 @@ void recv_mail_from_client(server_t *server, char *buf)
         end += end_size;
 
         size_t message_size = end - server->client_info->input_buf->str;
-        server->client_info->mail->data = string_create(message_size, server->client_info->input_buf->str);
+        server->client_info->mail->data = string_create(server->client_info->input_buf->str, message_size);
         client_info_trim_input_buf(server->client_info, message_size + end_size);
         
         if (!server->client_info->mail) {

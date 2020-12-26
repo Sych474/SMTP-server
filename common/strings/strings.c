@@ -1,6 +1,8 @@
 #include "strings.h"
 
-string_t *string_allocate(size_t str_size)
+int string_expand_memory(string_t *str);
+
+string_t *string_init(size_t str_size)
 {
     string_t *string = malloc(sizeof(string_t));
     if (string) {
@@ -16,16 +18,13 @@ string_t *string_allocate(size_t str_size)
     return string;
 }
 
-string_t *string_create(size_t str_size, const char *str) 
+string_t *string_create(const char *str, size_t str_size)
 {
-    size_t str_len = strlen(str);
-    if (str_len > str_size)
-        return NULL; 
+    string_t *string = string_init(str_size + 1); // add 1 for correct ending of str
 
-    string_t *string = string_allocate(str_size); 
     if (string)
-        memcpy(string->str, str, str_len);
-    
+        memcpy(string->str, str, str_size);
+
     return string;
 }
 
@@ -84,17 +83,10 @@ int string_set(string_t *dst, char *src, size_t len, size_t offset)
 {
     if (string_expand_memory_to(dst, len) < 0)
         return -1; 
+
+    string_clear(dst);
     
     memcpy(dst->str, src + offset, len - offset);
-    return 0;
-}
-
-int string_insert(string_t *dst, char *src, size_t len, size_t offset)
-{
-    if (string_expand_memory_to(dst, strlen(dst->str) + len) < 0)
-        return -1; 
-    
-    memcpy(dst->str + offset, src, len);
     return 0;
 }
 

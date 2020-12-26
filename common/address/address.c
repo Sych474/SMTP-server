@@ -1,17 +1,15 @@
 #include "address.h"
 
-const char *local_domain = "local.com";
+address_type_t get_address_type(char *str, char *local_domain);
 
-address_type_t get_address_type(char *str); 
-
-address_t *address_init(string_t *str)
+address_t *address_init(string_t *str, char *local_domain)
 {
     //TODO приведение адреса к единому виду
     address_t *address = malloc(sizeof(address_t));
     if (!address)
         return NULL; 
     address->str = str;
-    address->type = get_address_type(str->str); //TODO использовать приведенную к стандарту строку
+    address->type = get_address_type(str->str, local_domain); //TODO использовать приведенную к стандарту строку
     return address;
 }
 
@@ -31,12 +29,13 @@ char *address_get_str(address_t *address)
 string_t *address_get_username(address_t *address) 
 {
     char *end = strstr(address_get_str(address), "@");
-    size_t username_size = end - address_get_str(address);
 
-    return string_create(username_size, address_get_str(address));
+    size_t username_size = end - address_get_str(address);
+    
+    return string_create(address_get_str(address), username_size);
 }
 
-address_type_t get_address_type(char *str)
+address_type_t get_address_type(char *str, char *local_domain)
 {
     char *domain = strstr(str, local_domain);
 
