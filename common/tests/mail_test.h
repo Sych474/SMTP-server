@@ -1,4 +1,3 @@
-  
 #ifndef MAIL_TEST_INCLUDE_GUARD
 #define MAIL_TEST_INCLUDE_GUARD
 

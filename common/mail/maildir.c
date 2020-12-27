@@ -4,10 +4,6 @@ int create_dir_if_not_exists(const char* path);
 
 int maildir_save_mail_internal(mail_t *mail, address_t *address, char *base_mail_dir, logger_t *logger);
 
-char *concat_dir_and_filename(char *dir, char *filename);
-char *get_maildir_dir(char *base_mail_dir, address_t *address, char *final_dir);
-char *get_maildir_filename();
-
 int maildir_save_mail(mail_t *mail, char *base_mail_dir, logger_t *logger)
 {
     printf("maildir_save_mail IN\n");
@@ -34,11 +30,11 @@ int maildir_save_mail(mail_t *mail, char *base_mail_dir, logger_t *logger)
 int maildir_save_mail_internal(mail_t *mail, address_t *address, char *base_mail_dir, logger_t *logger)
 {
     printf("maildir_save_mail_internal IN\n");
-    char *filename = get_maildir_filename();
+    char *filename = maildir_get_filename();
     printf("filename: %s\n", filename);
-    char* tmp_dir = get_maildir_dir(base_mail_dir, address, MAILDIR_TMP);
+    char* tmp_dir = maildir_get_dir(base_mail_dir, address, MAILDIR_TMP);
     printf("tmp_dir: %s\n", tmp_dir);
-    char* new_dir = get_maildir_dir(base_mail_dir, address, MAILDIR_NEW);
+    char* new_dir = maildir_get_dir(base_mail_dir, address, MAILDIR_NEW);
     printf("new_dir: %s\n", new_dir);
 
     if (filename == NULL || tmp_dir == NULL || new_dir == NULL) {
@@ -85,28 +81,30 @@ int maildir_save_mail_internal(mail_t *mail, address_t *address, char *base_mail
     return 0;
 }
 
-char *concat_dir_and_filename(char *dir, char *filename)
+char *concat_dir_and_filename(const char *dir, const char *filename)
 {
     size_t len = strlen(dir) + strlen(filename) + 2;
     char *res = malloc(sizeof(char) * len);
     if (res == NULL)
         return NULL; 
+    memset(res, 0, len);
         
-    snprintf(filename, len, "%s/%s", dir, filename);
+    snprintf(res, len, "%s/%s", dir, filename);
     return res;    
 }
 
-char *get_maildir_dir(char *base_mail_dir, address_t *address, char *final_dir) 
+char *maildir_get_dir(char *base_mail_dir, address_t *address, char *final_dir) 
 {
     char *filename;
     int filename_len;
-    
+
     if (address != NULL) {
         string_t *username = address_get_username(address);
         if (username == NULL)
             return NULL; 
 
         filename_len = strlen(base_mail_dir) + strlen(final_dir) + strlen(username->str) + 3;
+        
         filename = malloc(sizeof(char) * filename_len);
         if (filename == NULL)
             return NULL; 
@@ -116,8 +114,7 @@ char *get_maildir_dir(char *base_mail_dir, address_t *address, char *final_dir)
         string_free(username);
         return filename;
     } else {
-        
-        filename_len = strlen(base_mail_dir) + strlen(final_dir) + strlen(address_get_str(address)) + 2;
+        filename_len = strlen(base_mail_dir) + strlen(final_dir) + 2;
         filename = malloc(sizeof(char) * filename_len);
         if (filename == NULL)
             return NULL; 
@@ -127,7 +124,7 @@ char *get_maildir_dir(char *base_mail_dir, address_t *address, char *final_dir)
     }
 }
 
-char *get_maildir_filename()
+char *maildir_get_filename()
 {
     unsigned long int curr_time = (unsigned) time(NULL);
     size_t time_len = floor(log10(curr_time)) + 1;

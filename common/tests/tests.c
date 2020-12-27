@@ -50,6 +50,16 @@ int main (int argc, char *argv[])
         return result;
     }
 
+    CU_pSuite maildir_suite = CU_add_suite("Maildir unit tests", maildir_test_init, maildir_test_free);
+    if (!maildir_suite) {
+        CU_cleanup_registry();
+        return CU_get_error();
+    }
+    if ((result = maildir_test_fill_suite(maildir_suite)) != CUE_SUCCESS) {
+        CU_cleanup_registry();
+        return result;
+    }
+
     CU_set_output_filename(C_UNIT_FILENAME_ROOT);
     CU_list_tests_to_file();
     CU_automated_run_tests();
