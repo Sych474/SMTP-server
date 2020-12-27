@@ -40,18 +40,17 @@ te_server_fsm_state fsm_handle_mail(server_t* server, string_t *data, te_server_
 {
     mail_free(server->client_info->mail);
     server->client_info->mail = mail_init();
-    
+
     if (!server->client_info->mail) {
         log_error(server->logger, "[WORKER %d] error in allocating mail.", getpid());
         string_free(data);
         return client_info_set_state(server->client_info, SERVER_FSM_EV_INVALID);
     }
 
-    printf("DATA: %s\n", data->str);
     address_t *address = address_init(data, LOCAL_DOMAIN);
+    string_free(data);
     if (!address) {
         log_error(server->logger, "[WORKER %d] error in allocating mail.", getpid());
-        string_free(data);
         return client_info_set_state(server->client_info, SERVER_FSM_EV_INVALID);
     }
 
@@ -62,16 +61,15 @@ te_server_fsm_state fsm_handle_mail(server_t* server, string_t *data, te_server_
         log_error(server->logger, "[WORKER %d] error in server_set_output_buf.", getpid());
         return client_info_set_state(server->client_info, SERVER_FSM_EV_INVALID);
     }
-    
     return client_info_set_state(server->client_info, next_state);
 }
 
 te_server_fsm_state fsm_handle_rcpt(server_t* server, string_t *data, te_server_fsm_state next_state)
-{
+{ 
     address_t *address = address_init(data, LOCAL_DOMAIN);
+    string_free(data);
     if (!address) {
         log_error(server->logger, "[WORKER %d] error in allocating mail.", getpid());
-        string_free(data);
         return client_info_set_state(server->client_info, SERVER_FSM_EV_INVALID);
     }
 
@@ -83,7 +81,6 @@ te_server_fsm_state fsm_handle_rcpt(server_t* server, string_t *data, te_server_
         log_error(server->logger, "[WORKER %d] error in server_set_output_buf.", getpid());
         return client_info_set_state(server->client_info, SERVER_FSM_EV_INVALID);
     }
-
     return client_info_set_state(server->client_info, next_state);
 }
 

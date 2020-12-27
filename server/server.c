@@ -304,18 +304,31 @@ int send_to_client(server_t *server)
     int send_len = send(server->fds[POLL_FDS_CLIENT].fd, buf, strlen(buf), 0);
 
     if (send_len > 0) {
-        //clear mesage 
-        string_clear(server->client_info->output_buf);
 
-        //set socket to listen mode
-        server->fds[POLL_FDS_CLIENT].events = POLLIN;
-        server->fds[POLL_FDS_CLIENT].revents = 0;
+        server->client_info->last_message_time = time(NULL);
+
+        if (strlen(server->client_info->output_buf->str) < BUFFER_SIZE) {
+            // end of output_buf
+            //clear mesage 
+            string_clear(server->client_info->output_buf);
+
+            //set socket to listen mode
+            server->fds[POLL_FDS_CLIENT].events = POLLIN;
+            server->fds[POLL_FDS_CLIENT].revents = 0;
+
+        } else {
+            // have more data in output_buf
+            string_begining_trim(server->client_info->output_buf, BUFFER_SIZE);
+            
+            // need more POLLOUT
+            server->fds[POLL_FDS_CLIENT].events = POLLOUT;
+            server->fds[POLL_FDS_CLIENT].revents = 0;
+        }
 
         // process correct closing
         if (is_in_state(server, SERVER_FSM_ST_TIMEOUT) || is_in_state(server, SERVER_FSM_ST_QUIT))
             server_fsm_step(server->client_info->fsm_state, SERVER_FSM_EV_CON_CLOSE, server, NULL);
     }
-
     return send_len;
 }
 

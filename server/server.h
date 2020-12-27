@@ -34,7 +34,7 @@
 #define END_SIGNAL              "exit"
 #define SERVER_TIMEOUT          300
 
-#define SERVER_MAIL_DIR         "./test_mail"
+#define SERVER_MAIL_DIR         "/home/netroot/test_mail"
 
 typedef struct server_struct {    
 

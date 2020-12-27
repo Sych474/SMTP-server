@@ -8,7 +8,7 @@ address_t *address_init(string_t *str, char *local_domain)
     address_t *address = malloc(sizeof(address_t));
     if (!address)
         return NULL; 
-    address->str = str;
+    address->str = string_create(str->str, str->str_size);
     address->type = get_address_type(str->str, local_domain); //TODO использовать приведенную к стандарту строку
     return address;
 }
@@ -23,7 +23,9 @@ void address_free(address_t *address)
 
 char *address_get_str(address_t *address)
 {
-    return address->str->str;
+    if (address && address->str)
+        return address->str->str;
+    return NULL;
 }
 
 string_t *address_get_username(address_t *address) 

@@ -1,12 +1,11 @@
 #include "maildir.h"
 
-int create_dir_if_not_exists(const char* path);
+int recursive_mkdir(const char *dir, int rights);
 
 int maildir_save_mail_internal(mail_t *mail, address_t *address, char *base_mail_dir, logger_t *logger);
 
 int maildir_save_mail(mail_t *mail, char *base_mail_dir, logger_t *logger)
 {
-    printf("maildir_save_mail IN\n");
     int saved_remote = 0;
     for (size_t i = 0; i < mail->rcpts_cnt; i++) {
         if(mail->rcpts[i]->type == ADDRESS_TYPE_LOCAL)
@@ -14,28 +13,24 @@ int maildir_save_mail(mail_t *mail, char *base_mail_dir, logger_t *logger)
                 return -1;
         
         if (!saved_remote && mail->rcpts[i]->type == ADDRESS_TYPE_REMOTE) {
-            printf("ADDRESS_TYPE_REMOTE\n");
             int res = maildir_save_mail_internal(mail, NULL, base_mail_dir, logger);
-            printf("res: %d\n", res);
             if (res < 0)
                 return -1;
             saved_remote = 1; 
         }
     }
-    printf("maildir_save_mail OUT\n");
 
     return 0;
 }
 
 int maildir_save_mail_internal(mail_t *mail, address_t *address, char *base_mail_dir, logger_t *logger)
 {
-    printf("maildir_save_mail_internal IN\n");
     char *filename = maildir_get_filename();
-    printf("filename: %s\n", filename);
+    log_debug(logger, "[WORKER %d] maildir_save_mail_internal filename: %s", getpid(), filename);
     char* tmp_dir = maildir_get_dir(base_mail_dir, address, MAILDIR_TMP);
-    printf("tmp_dir: %s\n", tmp_dir);
+    log_debug(logger, "[WORKER %d] maildir_save_mail_internal tmp_dir: %s", getpid(), tmp_dir);
     char* new_dir = maildir_get_dir(base_mail_dir, address, MAILDIR_NEW);
-    printf("new_dir: %s\n", new_dir);
+    log_debug(logger, "[WORKER %d] maildir_save_mail_internal new_dir: %s", getpid(), new_dir);
 
     if (filename == NULL || tmp_dir == NULL || new_dir == NULL) {
         if (filename)
@@ -47,13 +42,16 @@ int maildir_save_mail_internal(mail_t *mail, address_t *address, char *base_mail
         return -1; 
     }
 
+    if (create_dir_if_not_exists(tmp_dir) < 0 || create_dir_if_not_exists(new_dir) < 0) {
+        log_error(logger, "[WORKER %d] create_dir_if_not_exists error", getpid());
+        return -1; 
+    }
 
-    create_dir_if_not_exists(tmp_dir);
-    create_dir_if_not_exists(new_dir);
-    printf("create_dir_if_not_exists\n");
+    log_debug(logger, "[WORKER %d] create_dir_if_not_exists done", getpid());
 
     char *tmp_filename = concat_dir_and_filename(tmp_dir, filename);
     char *new_filename = concat_dir_and_filename(new_dir, filename);
+    
     free(filename);
     free(tmp_dir);
     free(new_dir);
@@ -66,18 +64,22 @@ int maildir_save_mail_internal(mail_t *mail, address_t *address, char *base_mail
         return -1; 
     }
 
+    log_debug(logger, "[WORKER %d] tmp_filename: %s", getpid(), tmp_filename);
+    log_debug(logger, "[WORKER %d] new_filename: %s", getpid(), new_filename);
+
     if (mail_write(tmp_filename, mail, logger) < 0){
         free(tmp_filename);
         free(new_filename);
+        log_error(logger, "[WORKER %d] error on writing file: %s", getpid(), tmp_filename);
         return -1;     
     }
-    printf("mail writed\n");
+    log_info(logger, "[WORKER %d] Mail written: %s", getpid(), tmp_filename);
 
     rename(tmp_filename, new_filename);
+    log_info(logger, "[WORKER %d] Mail moved to: %s", getpid(), new_filename);
 
     free(tmp_filename);
     free(new_filename);
-    printf("maildir_save_mail_internal OUT\n");
     return 0;
 }
 
@@ -152,8 +154,28 @@ int create_dir_if_not_exists(const char* path)
 {
     struct stat st;
     if (stat(path, &st) == -1)
-        if (mkdir(path, 0700) == -1)
+        if (recursive_mkdir(path, 0700) == -1)
             return -1;
     
     return 0;
+}
+
+int recursive_mkdir(const char *dir, int rights)
+{
+    char tmp[MAILDIR_PATH_MAX_SIZE];
+    snprintf(tmp, sizeof(tmp),"%s",dir);
+    size_t len = strlen(tmp);
+
+    if(tmp[len - 1] == '/')
+        tmp[len - 1] = 0;
+        
+    char *p = tmp + 1;
+    for(; *p; p++) {
+        if(*p == '/') {
+            *p = 0;
+            mkdir(tmp, rights);
+            *p = '/';
+        }
+    }
+    return mkdir(tmp, rights);
 }

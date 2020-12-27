@@ -27,5 +27,6 @@ mail_t *mail_read(char *filename); // not implemented
 
 int mail_write(char *filename, mail_t *mail, logger_t *logger);
 int mail_add_rcpt(mail_t *mail, address_t *rcpt); 
+void mail_dbg_print(mail_t *mail);
 
 #endif
