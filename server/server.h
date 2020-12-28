@@ -10,6 +10,8 @@
 #include <sys/time.h>
 #include <sys/socket.h>
 #include <sys/signalfd.h>
+#include <netdb.h>
+
 
 #include <arpa/inet.h>
 
@@ -19,7 +21,6 @@
 #include "../common/privileges/privileges_dropper.h"
 #include "autogen/server-fsm.h"
 #include "client_info.h"
-
 
 
 #define BUFFER_SIZE             1024
@@ -38,8 +39,13 @@
 
 #define SERVER_MAIL_DIR         "/home/netroot/test_mail"
 
-typedef struct server_struct {    
+typedef enum server_ip_version_enum {
+    SERVER_IPV4 = 0, 
+    SERVER_IPV6 = 1
+} server_ip_version_t;
 
+typedef struct server_struct {    
+    server_ip_version_t ip_version;
     logger_t *logger;
     parser_t *parser; 
     struct pollfd fds[POLL_FDS_COUNT]; 
@@ -47,7 +53,7 @@ typedef struct server_struct {
     int is_master;
 } server_t;
 
-server_t *server_init(int port, int signal_fd, logger_t *logger); 
+server_t *server_init(int port, int signal_fd, logger_t *logger, server_ip_version_t ip_version); 
 
 int server_start(server_t *server, int port);
 

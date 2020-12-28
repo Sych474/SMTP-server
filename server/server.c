@@ -7,7 +7,7 @@ int master_process(server_t *server);
 int worker_process(server_t *server);
 void server_finalize(server_t *server);
 
-int accept_new_client(server_t *server);
+int accept_new_client(server_t *server, struct sockaddr *addr);
 
 void set_empty_fd(struct pollfd* fds, int index);
 void set_pollin_fd(struct pollfd* fds, int index, int fd);
@@ -25,7 +25,7 @@ void check_timeout(server_t *server);
 int check_state(server_t *server);
 int is_in_state(server_t *server, te_server_fsm_state state);
 
-server_t *server_init(int port, int signal_fd, logger_t *logger) 
+server_t *server_init(int port, int signal_fd, logger_t *logger, server_ip_version_t ip_version) 
 {
     server_t* server = (server_t*) malloc(sizeof(server_t));
 
@@ -34,6 +34,7 @@ server_t *server_init(int port, int signal_fd, logger_t *logger)
         return NULL;
     }
 
+    server->ip_version = ip_version;
     server->parser = parser_init();
         if (server->parser == NULL) {
         free(server);
@@ -121,8 +122,10 @@ int master_process(server_t *server)
 {
     if (server->fds[POLL_FDS_SERVER].revents & POLLIN) {
         server->fds[POLL_FDS_SERVER].revents = 0;
+
+        struct sockaddr addr; 
   
-        if (accept_new_client(server) != 0) {
+        if (accept_new_client(server, &addr) != 0) {
             log_error(server->logger, "[MASTER] Can not accept new client!");
             return 0;
         }
@@ -132,7 +135,7 @@ int master_process(server_t *server)
             server->is_master = 0;
             set_empty_fd(server->fds, POLL_FDS_SERVER);
 
-            server->client_info = client_info_init();
+            server->client_info = client_info_init(addr);
             if (!server->client_info) {
                 log_error(server->logger, "[WORKER %d] Error on memory allocation", getpid()); 
                 return 0;
@@ -217,13 +220,20 @@ int server_set_output_buf(server_t *server, char* msg, size_t msg_size)
     return 0;
 }
 
-int accept_new_client(server_t *server)
+int accept_new_client(server_t *server, struct sockaddr *addr)
 {
-    int client_fd = accept(server->fds[POLL_FDS_SERVER].fd, NULL, 0);
+    socklen_t addrlen = sizeof(struct sockaddr);
+    int client_fd = accept(server->fds[POLL_FDS_SERVER].fd, addr, &addrlen);
     if (client_fd < 0) {
         log_error(server->logger, "[MASTER] Can not accept client fd.");
         return client_fd;
     }
+    
+    char hbuf[NI_MAXHOST];
+    if (getnameinfo(addr, addrlen, hbuf, sizeof(hbuf), NULL, 0, NI_NAMEREQD))
+        log_warning(server->logger, "could not resolve client hostname");
+    else
+        log_info(server->logger, "connected to client with host=%s", hbuf);
     
     set_pollin_fd(server->fds, POLL_FDS_CLIENT, client_fd);
     return 0;

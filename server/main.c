@@ -25,7 +25,7 @@ int main (int argc, char *argv[]) {
     if (logger == NULL)
         on_error("Error on creating logger!\n");
 
-    server_t* server = server_init(port, signal_fd, logger);
+    server_t* server = server_init(port, signal_fd, logger, SERVER_IPV4);
 
     if (server == NULL)
         on_error("error on starting server.\n");      

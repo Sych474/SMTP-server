@@ -9,7 +9,7 @@ void client_info_finalize(client_info_t *client_info)
         string_free(client_info->output_buf);
 }
 
-client_info_t *client_info_init()
+client_info_t *client_info_init(struct sockaddr addr)
 {
     client_info_t *client_info = malloc(sizeof(client_info_t));
     if (!client_info)
@@ -31,6 +31,7 @@ client_info_t *client_info_init()
     client_info->last_message_time = time(NULL);
     client_info->fsm_state = SERVER_FSM_ST_INIT;
     client_info->mail = NULL;
+    client_info->addr = addr;
 
     return client_info;
 }
