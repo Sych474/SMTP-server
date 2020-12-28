@@ -9,8 +9,8 @@
 #include "autogen/server-fsm.h"
 
 te_server_fsm_state fsm_handle_accepted(server_t* server, te_server_fsm_state next_state);
-te_server_fsm_state fsm_handle_helo(server_t* server, te_server_fsm_state next_state);
-te_server_fsm_state fsm_handle_ehlo(server_t* server, te_server_fsm_state next_state);
+te_server_fsm_state fsm_handle_helo(server_t* server, string_t *data, te_server_fsm_state next_state);
+te_server_fsm_state fsm_handle_ehlo(server_t* server, string_t *data, te_server_fsm_state next_state);
 te_server_fsm_state fsm_handle_mail(server_t* server, string_t *data, te_server_fsm_state next_state);
 te_server_fsm_state fsm_handle_rcpt(server_t* server, string_t *data, te_server_fsm_state next_state);
 te_server_fsm_state fsm_handle_data(server_t* server, te_server_fsm_state next_state);

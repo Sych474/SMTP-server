@@ -458,6 +458,7 @@ void process_parser_result(server_t *server, parser_result_t *result)
         break;
     }
 
+
     if (is_in_state(server, SERVER_FSM_ST_INVALID))
         log_error(server->logger, "[WORKER %d] error in server_fsm_step with cmd %d.", getpid(), result->smtp_cmd);
 }

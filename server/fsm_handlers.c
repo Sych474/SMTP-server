@@ -12,9 +12,11 @@ te_server_fsm_state fsm_handle_accepted(server_t* server, te_server_fsm_state ne
     return client_info_set_state(server->client_info, next_state);
 }
 
-te_server_fsm_state fsm_handle_helo(server_t* server, te_server_fsm_state next_state)
+te_server_fsm_state fsm_handle_helo(server_t* server, string_t *data, te_server_fsm_state next_state)
 {
     log_info(server->logger, "[WORKER %d] get HELO cmd, next state: %d", getpid(), next_state);
+
+    //TODO process data to check addr and ip
 
     if (server_set_output_buf(server, SMTP_MSG_HELO, strlen(SMTP_MSG_HELO)) < 0) {
         log_error(server->logger, "[WORKER %d] error in server_set_output_buf.", getpid());
@@ -24,9 +26,11 @@ te_server_fsm_state fsm_handle_helo(server_t* server, te_server_fsm_state next_s
     return client_info_set_state(server->client_info, next_state);
 }
 
-te_server_fsm_state fsm_handle_ehlo(server_t* server, te_server_fsm_state next_state) 
+te_server_fsm_state fsm_handle_ehlo(server_t* server, string_t *data, te_server_fsm_state next_state) 
 {
     log_info(server->logger, "[WORKER %d] get EHLO cmd, next state: %d", getpid(), next_state);
+
+    //TODO process data to check addr and ip
 
     if (server_set_output_buf(server, SMTP_MSG_EHLO, strlen(SMTP_MSG_EHLO)) < 0) {
         log_error(server->logger, "[WORKER %d] error in server_set_output_buf.", getpid());
@@ -43,12 +47,10 @@ te_server_fsm_state fsm_handle_mail(server_t* server, string_t *data, te_server_
 
     if (!server->client_info->mail) {
         log_error(server->logger, "[WORKER %d] error in allocating mail.", getpid());
-        string_free(data);
         return client_info_set_state(server->client_info, SERVER_FSM_EV_INVALID);
     }
 
     address_t *address = address_init(data, LOCAL_DOMAIN);
-    string_free(data);
     if (!address) {
         log_error(server->logger, "[WORKER %d] error in allocating mail.", getpid());
         return client_info_set_state(server->client_info, SERVER_FSM_EV_INVALID);
@@ -67,7 +69,6 @@ te_server_fsm_state fsm_handle_mail(server_t* server, string_t *data, te_server_
 te_server_fsm_state fsm_handle_rcpt(server_t* server, string_t *data, te_server_fsm_state next_state)
 { 
     address_t *address = address_init(data, LOCAL_DOMAIN);
-    string_free(data);
     if (!address) {
         log_error(server->logger, "[WORKER %d] error in allocating mail.", getpid());
         return client_info_set_state(server->client_info, SERVER_FSM_EV_INVALID);
@@ -81,6 +82,7 @@ te_server_fsm_state fsm_handle_rcpt(server_t* server, string_t *data, te_server_
         log_error(server->logger, "[WORKER %d] error in server_set_output_buf.", getpid());
         return client_info_set_state(server->client_info, SERVER_FSM_EV_INVALID);
     }
+    
     return client_info_set_state(server->client_info, next_state);
 }
 
@@ -105,7 +107,6 @@ te_server_fsm_state fsm_handle_mail_end(server_t* server, te_server_fsm_state ne
     }
 
     if (maildir_save_mail(server->client_info->mail, SERVER_MAIL_DIR, server->logger) < 0) {
-        printf("HERE\n");
         log_error(server->logger, "[WORKER %d] error in maildir_save_mail.", getpid());
         return client_info_set_state(server->client_info, SERVER_FSM_EV_INVALID);
     }

@@ -355,14 +355,14 @@ server_fsm_step(
 
     case SERVER_FSM_TR_EHLO:
         /* START == EHLO == DO NOT CHANGE THIS COMMENT */
-        nxtSt = fsm_handle_ehlo(server, nxtSt);
+        nxtSt = fsm_handle_ehlo(server, data_str, nxtSt);
         /* END   == EHLO == DO NOT CHANGE THIS COMMENT */
         break;
 
 
     case SERVER_FSM_TR_HELO:
         /* START == HELO == DO NOT CHANGE THIS COMMENT */
-        nxtSt = fsm_handle_helo(server, nxtSt);
+        nxtSt = fsm_handle_helo(server, data_str, nxtSt);
         /* END   == HELO == DO NOT CHANGE THIS COMMENT */
         break;
 
