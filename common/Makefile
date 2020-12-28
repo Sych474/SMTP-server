@@ -4,7 +4,7 @@ CFLAGS_END		:= -lpcre -lm  -lcunit
 
 BUILD_DIR 		:= build
 
-SRC_DIRS  	 	:= . ./logger ./mail ./strings ./tests ./address
+SRC_DIRS  	 	:= . ./logger ./mail ./strings ./tests ./address ./privileges
 SRC_DIRS     	:= $(addprefix ../,$(SRC_DIRS))
 SRC_FILES 		:= $(wildcard $(addsuffix /*.c,$(SRC_DIRS)))
 OBJ_FILES 		:= $(notdir $(patsubst %.c,%.o, $(SRC_FILES)))

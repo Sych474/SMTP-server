@@ -16,8 +16,10 @@
 #include "parser.h"
 #include "../common/logger/logger.h"
 #include "../common/strings/strings.h"
+#include "../common/privileges/privileges_dropper.h"
 #include "autogen/server-fsm.h"
 #include "client_info.h"
+
 
 
 #define BUFFER_SIZE             1024

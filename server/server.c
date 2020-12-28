@@ -25,7 +25,6 @@ void check_timeout(server_t *server);
 int check_state(server_t *server);
 int is_in_state(server_t *server, te_server_fsm_state state);
 
-
 server_t *server_init(int port, int signal_fd, logger_t *logger) 
 {
     server_t* server = (server_t*) malloc(sizeof(server_t));
@@ -50,6 +49,10 @@ server_t *server_init(int port, int signal_fd, logger_t *logger)
     if (server_fd < 0) {
         free(server);
         log_error(logger, "Can not create or bind socket for server with port: %d", port); 
+        return NULL; 
+    }
+    if (drop_privileges(logger) < 0) {
+        free(server);
         return NULL; 
     }
 
@@ -448,5 +451,3 @@ void process_parser_result(server_t *server, parser_result_t *result)
     if (is_in_state(server, SERVER_FSM_ST_INVALID))
         log_error(server->logger, "[WORKER %d] error in server_fsm_step with cmd %d.", getpid(), result->smtp_cmd);
 }
-
-

@@ -5,7 +5,7 @@ CFLAGS_END		:= -lpcre -lm
 BUILD_DIR 		:= build
 TEST_BUILD_DIR  := test_build
 
-SRC_DIRS  	 		:= . ../common/logger ../common/strings ../common/mail ../common/address ./autogen ./unit_tests
+SRC_DIRS  	 		:= . ../common/logger ../common/strings ../common/mail ../common/address ./autogen ../common/privileges
 SRC_DIRS     		:= $(addprefix ../,$(SRC_DIRS))
 SRC_FILES 			:= $(wildcard $(addsuffix /*.c,$(SRC_DIRS)))
 OBJ_FILES 			:= $(notdir $(patsubst %.c,%.o, $(SRC_FILES)))
