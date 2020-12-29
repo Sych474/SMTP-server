@@ -17,6 +17,16 @@ te_server_fsm_state fsm_handle_helo(server_t* server, string_t *data, te_server_
     log_info(server->logger, "[WORKER %d] get HELO cmd, next state: %d", getpid(), next_state);
 
     //TODO process data to check addr and ip
+    if (server->client_info->addr == NULL)
+        log_warning(server->logger, "[WORKER %d] No revers DNS record.", getpid());
+    else if (data == NULL)
+        log_warning(server->logger, "[WORKER %d] No domain in HELO.", getpid());
+    else {
+        // todo trim data string here, or in parser...
+        log_info(server->logger, "[WORKER %d] CHECK DNS: %d", getpid(), strcmp(data->str, server->client_info->addr->str));
+        log_info(server->logger, "[WORKER %d] host: %s; sent_host: %s", getpid(), server->client_info->addr->str, data->str);
+    }
+    
 
     if (server_set_output_buf(server, SMTP_MSG_HELO, strlen(SMTP_MSG_HELO)) < 0) {
         log_error(server->logger, "[WORKER %d] error in server_set_output_buf.", getpid());
@@ -188,3 +198,4 @@ te_server_fsm_state fsm_handle_syntax_error(server_t* server, te_server_fsm_stat
 
     return client_info_set_state(server->client_info, next_state);
 }
+

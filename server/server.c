@@ -7,7 +7,7 @@ int master_process(server_t *server);
 int worker_process(server_t *server);
 void server_finalize(server_t *server);
 
-int accept_new_client(server_t *server, struct sockaddr *addr);
+int accept_new_client(server_t *server, string_t **host);
 
 void set_empty_fd(struct pollfd* fds, int index);
 void set_pollin_fd(struct pollfd* fds, int index, int fd);
@@ -123,7 +123,7 @@ int master_process(server_t *server)
     if (server->fds[POLL_FDS_SERVER].revents & POLLIN) {
         server->fds[POLL_FDS_SERVER].revents = 0;
 
-        struct sockaddr addr; 
+        string_t *addr; 
   
         if (accept_new_client(server, &addr) != 0) {
             log_error(server->logger, "[MASTER] Can not accept new client!");
@@ -220,20 +220,28 @@ int server_set_output_buf(server_t *server, char* msg, size_t msg_size)
     return 0;
 }
 
-int accept_new_client(server_t *server, struct sockaddr *addr)
+int accept_new_client(server_t *server, string_t **host)
 {
+    struct sockaddr addr;
     socklen_t addrlen = sizeof(struct sockaddr);
-    int client_fd = accept(server->fds[POLL_FDS_SERVER].fd, addr, &addrlen);
+    int client_fd = accept(server->fds[POLL_FDS_SERVER].fd, &addr, &addrlen);
     if (client_fd < 0) {
         log_error(server->logger, "[MASTER] Can not accept client fd.");
         return client_fd;
     }
     
     char hbuf[NI_MAXHOST];
-    if (getnameinfo(addr, addrlen, hbuf, sizeof(hbuf), NULL, 0, NI_NAMEREQD))
-        log_warning(server->logger, "could not resolve client hostname");
-    else
-        log_info(server->logger, "connected to client with host=%s", hbuf);
+    *host = NULL;
+    if (getnameinfo(&addr, addrlen, hbuf, sizeof(hbuf), NULL, 0, NI_NAMEREQD))
+        log_warning(server->logger, "[MASTER] could not resolve client hostname");
+    else {
+        *host = string_create(hbuf, strlen(hbuf));
+        if (*host == NULL) {
+            log_error(server->logger, "[MASTER] Error on memory allocation");
+            return -1; 
+        }
+        log_info(server->logger, "[MASTER] connected to client with host=%s", hbuf);
+    }
     
     set_pollin_fd(server->fds, POLL_FDS_CLIENT, client_fd);
     return 0;
@@ -429,10 +437,10 @@ void process_parser_result(server_t *server, parser_result_t *result)
     switch (result->smtp_cmd)
     {
     case SMTP_HELO_CMD:
-        server_fsm_step(server->client_info->fsm_state, SERVER_FSM_EV_CMD_HELO, server, NULL);
+        server_fsm_step(server->client_info->fsm_state, SERVER_FSM_EV_CMD_HELO, server, result->data);
         break;
     case SMTP_EHLO_CMD:
-        server_fsm_step(server->client_info->fsm_state, SERVER_FSM_EV_CMD_EHLO, server, NULL);
+        server_fsm_step(server->client_info->fsm_state, SERVER_FSM_EV_CMD_EHLO, server, result->data);
         break;
     case SMTP_MAIL_CMD:
         server_fsm_step(server->client_info->fsm_state, SERVER_FSM_EV_CMD_MAIL, server, result->data);

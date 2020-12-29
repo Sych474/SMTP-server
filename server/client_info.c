@@ -1,5 +1,6 @@
 #include "client_info.h"
 
+//TODO refactor
 void client_info_finalize(client_info_t *client_info) 
 {
     if (client_info->input_buf)
@@ -7,9 +8,11 @@ void client_info_finalize(client_info_t *client_info)
 
     if (client_info->output_buf)
         string_free(client_info->output_buf);
+
+    string_free(client_info->addr);
 }
 
-client_info_t *client_info_init(struct sockaddr addr)
+client_info_t *client_info_init(string_t *addr)
 {
     client_info_t *client_info = malloc(sizeof(client_info_t));
     if (!client_info)

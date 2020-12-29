@@ -6,7 +6,6 @@
 #include <string.h>
 #include <poll.h>
 #include <time.h>
-#include <sys/socket.h>
 
 #include "../common/mail/maildir.h"
 #include "../common/logger/logger.h"
@@ -16,7 +15,7 @@
 #define CLIENT_INFO_START_BUFFER_SIZE 1024
 
 typedef struct client_info_struct {
-    struct sockaddr addr; 
+    string_t *addr; 
     string_t *input_buf;
     string_t *output_buf;
     mail_t *mail;
@@ -25,7 +24,7 @@ typedef struct client_info_struct {
 } client_info_t;
 
 void client_info_finalize(client_info_t *client_info);
-client_info_t *client_info_init(struct sockaddr addr);
+client_info_t *client_info_init(string_t *addr);
 
 int client_info_set_output_buf(client_info_t *client_info, char *output, size_t len);
 int client_info_concat_input_buf(client_info_t *client_info, char *input, size_t len);
