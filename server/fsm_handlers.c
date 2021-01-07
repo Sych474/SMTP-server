@@ -192,7 +192,6 @@ te_server_fsm_state fsm_handle_lost(server_t* server, te_server_fsm_state next_s
     return client_info_set_state(server->client_info, next_state);
 }
 
-
 te_server_fsm_state fsm_handle_syntax_error(server_t* server, te_server_fsm_state next_state)
 {
     log_info(server->logger, "[WORKER %d] input_error, next state: %d", getpid(), next_state);
@@ -205,3 +204,26 @@ te_server_fsm_state fsm_handle_syntax_error(server_t* server, te_server_fsm_stat
     return client_info_set_state(server->client_info, next_state);
 }
 
+te_server_fsm_state fsm_handle_cmd_error(server_t* server, te_server_fsm_state next_state)
+{
+    log_info(server->logger, "[WORKER %d] cmd_error, next state: %d", getpid(), next_state);
+    
+    if (server_set_output_buf(server, SMTP_MSG_CMD_ERROR, strlen(SMTP_MSG_CMD_ERROR)) < 0) {
+        log_error(server->logger, "[WORKER %d] error in server_set_output_buf.", getpid());
+        return client_info_set_state(server->client_info, SERVER_FSM_EV_INVALID);
+    }
+
+    return client_info_set_state(server->client_info, next_state);
+}
+
+te_server_fsm_state fsm_handle_invalid(server_t* server, te_server_fsm_state next_state)
+{
+    log_info(server->logger, "[WORKER %d] invalid, next state: %d", getpid(), next_state);
+    
+    if (server_set_output_buf(server, SMTP_MSG_INTERNAL_ERROR, strlen(SMTP_MSG_INTERNAL_ERROR)) < 0) {
+        log_error(server->logger, "[WORKER %d] error in server_set_output_buf.", getpid());
+        return client_info_set_state(server->client_info, SERVER_FSM_EV_INVALID);
+    }
+
+    return client_info_set_state(server->client_info, next_state);
+}

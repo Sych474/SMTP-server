@@ -420,6 +420,9 @@ void check_timeout(server_t *server)
 
 int check_state(server_t *server) 
 {
+    if (is_in_state(server, SERVER_FSM_ST_INVALID))
+        send_to_client(server);
+
     return (!is_in_state(server, SERVER_FSM_ST_INVALID) && !is_in_state(server, SERVER_FSM_ST_DONE));
 }
 
@@ -439,18 +442,34 @@ void process_parser_result(server_t *server, parser_result_t *result)
     case SMTP_HELO_CMD:
         server_fsm_step(server->client_info->fsm_state, SERVER_FSM_EV_CMD_HELO, server, result->data);
         break;
+
     case SMTP_EHLO_CMD:
         server_fsm_step(server->client_info->fsm_state, SERVER_FSM_EV_CMD_EHLO, server, result->data);
         break;
+
     case SMTP_MAIL_CMD:
-        server_fsm_step(server->client_info->fsm_state, SERVER_FSM_EV_CMD_MAIL, server, result->data);
+        if (is_in_state(server, SERVER_FSM_ST_HELLO))
+            server_fsm_step(server->client_info->fsm_state, SERVER_FSM_EV_CMD_MAIL, server, result->data);
+        else 
+            server_fsm_step(server->client_info->fsm_state, SERVER_FSM_EV_CMD_ERROR, server, NULL);
         break;
+
     case SMTP_RCPT_CMD:
-        server_fsm_step(server->client_info->fsm_state, SERVER_FSM_EV_CMD_RCPT, server, result->data);
+        if ( is_in_state(server, SERVER_FSM_ST_MAIL_FROM) ||
+             is_in_state(server, SERVER_FSM_ST_RCPT_TO) || 
+             is_in_state(server, SERVER_FSM_ST_RCPT_TO_ADD))
+            server_fsm_step(server->client_info->fsm_state, SERVER_FSM_EV_CMD_RCPT, server, result->data);
+        else 
+            server_fsm_step(server->client_info->fsm_state, SERVER_FSM_EV_CMD_ERROR, server, NULL);
         break;
+
     case SMTP_DATA_CMD:
-        server_fsm_step(server->client_info->fsm_state, SERVER_FSM_EV_CMD_DATA, server, NULL);
+        if (is_in_state(server, SERVER_FSM_ST_RCPT_TO_ADD)) 
+            server_fsm_step(server->client_info->fsm_state, SERVER_FSM_EV_CMD_DATA, server, NULL);
+        else 
+            server_fsm_step(server->client_info->fsm_state, SERVER_FSM_EV_CMD_ERROR, server, NULL);
         break;
+
     case SMTP_RSET_CMD:
         server_fsm_step(server->client_info->fsm_state, SERVER_FSM_EV_CMD_RSET, server, NULL);
         break;

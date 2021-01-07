@@ -22,5 +22,7 @@ te_server_fsm_state fsm_handle_timeout(server_t* server, te_server_fsm_state nex
 te_server_fsm_state fsm_handle_close(server_t* server, te_server_fsm_state next_state);
 te_server_fsm_state fsm_handle_lost(server_t* server, te_server_fsm_state next_state);
 te_server_fsm_state fsm_handle_syntax_error(server_t* server, te_server_fsm_state next_state);
+te_server_fsm_state fsm_handle_invalid(server_t* server, te_server_fsm_state next_state);
+te_server_fsm_state fsm_handle_cmd_error(server_t* server, te_server_fsm_state next_state);
 
 #endif

@@ -15,6 +15,7 @@
 #define SMTP_MSG_QUIT           "221 SMTP server closing connection\r\n"
 
 #define SMTP_MSG_TIMEOUT        "420 Timeout!\r\n"
+#define SMTP_MSG_INTERNAL_ERROR "421 Internal error, server closing connection...\r\n"
 
 #define SMTP_MSG_SYNTAX_ERROR   "500 Syntax error, try again!\r\n"
 #define SMTP_MSG_VRFY           "502 Command not implemented\r\n"
