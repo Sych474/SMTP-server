@@ -1,11 +1,16 @@
-CC 				:= gcc
-CFLAGS 			:= -std=c99 -g -g3 -O0 -Wall -Werror -pedantic -D_GNU_SOURCE
-CFLAGS_END		:= -lpcre -lm
+CC 					:= gcc
+CFLAGS 				:= -std=c99 -g -g3 -O0 -Wall -Werror -pedantic -D_GNU_SOURCE
+CFLAGS_END			:= -lpcre -lm
 
-BUILD_DIR 		:= build
-TEST_BUILD_DIR  := test_build
+STYLE_CHECKER   	:= ../common/linter/cpplint.py
+STYLE_CHECKER_ARGS  := --linelength=120
+
+BUILD_DIR 			:= build
+TEST_BUILD_DIR  	:= test_build
 
 SRC_DIRS  	 		:= . ../common/logger ../common/strings ../common/mail ../common/address ./autogen ../common/privileges
+STYLE_FILES 		:= $(wildcard $(addsuffix /*.c,$(filter-out ./autogen, $(SRC_DIRS))))
+
 SRC_DIRS     		:= $(addprefix ../,$(SRC_DIRS))
 SRC_FILES 			:= $(wildcard $(addsuffix /*.c,$(SRC_DIRS)))
 OBJ_FILES 			:= $(notdir $(patsubst %.c,%.o, $(SRC_FILES)))
@@ -38,6 +43,9 @@ server: $(SERVER_OBJ_FILES)
 
 test: $(TEST_OBJ_FILES)
 	$(CC) $(CFLAGS) $^ -o $@ $(CFLAGS_END)
+
+test-style: 
+	$(STYLE_CHECKER) $(STYLE_CHECKER_ARGS) $(STYLE_FILES)
 
 %.o: %.c
 	$(CC) -c $(CFLAGS) $(addprefix -I ,$(SRC_DIRS)) $< $(CFLAGS_END)

@@ -1,14 +1,13 @@
 #include "privileges_dropper.h"
 
-int drop_privileges(logger_t *logger)
-{
+int drop_privileges(logger_t *logger) {
     gid_t gid;
     uid_t uid;
 
     // no need to "drop" the privileges that you don't have in the first place!
     if (getuid() != 0)
          return 0;
-    
+
     // when your program is invoked with sudo, getuid() will return 0 and you
     // won't be able to drop your privileges
     if ((uid = getuid()) == 0) {
@@ -46,7 +45,7 @@ int drop_privileges(logger_t *logger)
     }
     if (setuid(uid) != 0) {
         log_error(logger, "setgid error");
-        return -1;    
+        return -1;
     }
 
     // check if we successfully dropped the root privileges
@@ -55,6 +54,6 @@ int drop_privileges(logger_t *logger)
         return -1;
     }
 
-    log_info(logger, "Privileges are dropped"); 
+    log_info(logger, "Privileges are dropped");
     return 0;
 }

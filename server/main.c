@@ -10,9 +10,8 @@
 
 int create_signal_fd();
 
-int main (int argc, char *argv[]) {
-    
-    if (argc < 2) 
+int main(int argc, char *argv[]) {
+    if (argc < 2)
         on_error("Usage: %s [port]\n", argv[0]);
 
     int port = atoi(argv[1]);
@@ -28,11 +27,10 @@ int main (int argc, char *argv[]) {
     server_t* server = server_init(port, signal_fd, logger, SERVER_IPV4);
 
     if (server == NULL)
-        on_error("error on starting server.\n");      
-    
-    server_start(server, port); 
-    if (server->is_master)
-    {
+        on_error("error on starting server.\n");
+
+    server_start(server, port);
+    if (server->is_master) {
         log_info(logger, "Server stopped.");
         logger_stop(logger);
         free(logger);
@@ -41,8 +39,7 @@ int main (int argc, char *argv[]) {
     return 0;
 }
 
-int create_signal_fd()
-{
+int create_signal_fd() {
     sigset_t mask;
 
     sigemptyset(&mask);
@@ -50,7 +47,7 @@ int create_signal_fd()
     sigaddset(&mask, SIGQUIT);
 
     if (sigprocmask(SIG_BLOCK, &mask, NULL) == -1)
-        return -1; 
+        return -1;
 
     return signalfd(-1, &mask, 0);
 }
