@@ -91,17 +91,17 @@ te_client_state HANDLE_STATE_RECEIVE_DATA_RESPONSE_EVENT_SEND_MESSAGE_BODY(te_cl
 { 
 
     printf("current mess '%s'",currentMessage->str);
-    char buffer[BUFFER_SIZE];
+    //char buffer[BUFFER_SIZE];
     while(1)
     {
-            memset(buffer,0,sizeof(buffer));
+            /*memset(buffer,0,sizeof(buffer));
             printf("your data message for server %i (to quit write 'exit' anywhere in the message):\n",serverid);
             scanf(" %[^\n]", buffer);
-            printf("ur print '%s'",buffer);
+            printf("ur print '%s'",buffer);*/
 
-            string_concat(currentMessage,buffer,strlen(buffer));
+            //string_concat(currentMessage,buffer,strlen(buffer));
             printf("\nur message '%s'\n",currentMessage->str);
-            if (strstr(currentMessage->str,"exit"))
+            if (strstr(currentMessage->str,"\n.\n"))
             {
                 if (write(client->fd[serverid].fd,currentMessage->str,currentMessage->str_size) <= 0)
                 {

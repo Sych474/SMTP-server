@@ -12,7 +12,7 @@ all:
 	make client --directory=$(build_dir) --makefile=../Makefile
 
 client: $(notdir $(patsubst %.c,%.o, $(wildcard $(search_wildcards))))
-	gcc -lpcre $(version) $^ -o $@  
+	gcc  $(version) $^ -o $@  -lpcre
 	
 VPATH := $(source_dirs) 
 

@@ -99,7 +99,7 @@ parser_result_t *parser_parse_send(parser_t *parser, char* msg, int msg_len)
                 // get text after cmd
                 pcre_get_substring(msg, ovector, res, 1, &(text));
                 int len = ovector[3] - ovector[2];
-                result->data = string_create(len, text); 
+                result->data = string_create( text,len); 
                 if (!result->data) {
                     free(result);
                     return NULL;
@@ -136,7 +136,7 @@ parser_result_t *parser_parse_recv(parser_t *parser, char* msg, int msg_len)
                 // get text after cmd
                 pcre_get_substring(msg, ovector, res, 1, &(text));
                 int len = ovector[3] - ovector[2];
-                result->data = string_create(len, text); 
+                result->data = string_create(text,len); 
                 if (!result->data) {
                     free(result);
                     return NULL;

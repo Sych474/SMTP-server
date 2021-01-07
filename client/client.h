@@ -34,6 +34,7 @@ typedef struct client_struct
     struct pollfd fd[MAX_FD_SIZE];
     int fds_cnt;
     server_message_t server_message[MAX_FD_SIZE];
+    parser_result_t parser_result[MAX_FD_SIZE];
 } client_t;
 
 
