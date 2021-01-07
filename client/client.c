@@ -36,6 +36,7 @@ int start_handler(client_t *client)
             {
                 printf("\nwrite to server\n");
                 write_to_server(client);
+                //start_poll(client);
                 break;
             }
 
@@ -62,16 +63,22 @@ int start_handler(client_t *client)
 
 void start_poll(client_t *client)
 {
+    printf("\n  POLL=%d events = %d revents = %d",poll(client->fd,client->fds_cnt,100),client->fd[0].events,client->fd[0].revents);
+
     if(poll(client->fd,client->fds_cnt,100) > 0)
     {
+        printf("\n IN POLL");
         for (size_t i = 0; i < client->fds_cnt; i++)
         {
-            if(client->fd[i].revents & POLLIN)
+            printf("\n IN FOR");
+            if(client->fd[i].events & POLLIN)
             {
+
+                printf("\n IN POLLIN");
+
                 char recv[BUFFER_SIZE];
                 memset(recv,0,sizeof(recv));
-
-                if (read(client->fd[i].fd,recv,sizeof(recv)) <= 0)
+                if (read(client->fd[i].fd,recv,sizeof(recv)) < 0)
                 {
                     on_error("cannot read from server");
                 }
@@ -122,7 +129,9 @@ client_t* add_server(client_t*  client,char *ip, int port)
 
     client_fill_pollout(client,client->fds_cnt,server_fd);
     printf("you connected to server with fd #%i port %i\n",client->fds_cnt,port);
-    client->state[client->fds_cnt] = CLIENT_ST_STATE_RECEIVE_SMTP_GREETING;
+    client->state[client->fds_cnt] = CLIENT_ST_STATE_CONNECTED;
+    client->fd[client->fds_cnt].events = POLLIN; 
+
     client->fds_cnt++;
 
     return client;
@@ -136,6 +145,7 @@ void write_to_server(client_t *client)
     string_t *newMessage = string_create(1,"");
     memset(client->server_message[serverid].message,0,sizeof(client->server_message->message));
 
+    client->fd[serverid].events=POLLIN;
 
     if(client->state[serverid] == CLIENT_ST_STATE_RECEIVE_DATA_RESPONSE)
     {
@@ -145,7 +155,6 @@ void write_to_server(client_t *client)
     {
         send_command(client,serverid);
     }
-
 
 }
 
