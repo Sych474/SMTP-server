@@ -4,7 +4,9 @@
 
 #define SMTP_MSG_ACCEPTED       "220 SMTP server is ready! \r\n"
 #define SMTP_MSG_HELO           "250 OK (HELO)\r\n"
+#define SMTP_MSG_HELO_NO_DNS    "250 OK (HELO) WARNING: error on revers DNS check \r\n"
 #define SMTP_MSG_EHLO           "250 OK (EHLO) \r\n"
+#define SMTP_MSG_EHLO_NO_DNS    "250 OK (EHLO) WARNING: error on revers DNS check \r\n"
 #define SMTP_MSG_MAIL           "250 OK (MAIL)\r\n"
 #define SMTP_MSG_RCPT           "250 OK (RCPT)\r\n"
 #define SMTP_MSG_DATA           "354 Enter message, ending with \".\" on a line by itself\r\n"

@@ -1,5 +1,34 @@
 #include "fsm_handlers.h"
 
+te_server_fsm_state handle_helo_ehlo(server_t* server, string_t *data, te_server_fsm_state next_state, char* dns_confirmed_msg, char *dns_error_msg)
+{
+    int dns_confirmed = 0;
+    if (server->client_info->addr == NULL)
+        log_warning(server->logger, "[WORKER %d] No revers DNS record.", getpid());
+    else if (data == NULL)
+        log_warning(server->logger, "[WORKER %d] No domain in HELO (EHLO) command.", getpid());
+    else {
+        string_trim(data);
+        dns_confirmed = strcmp(data->str, server->client_info->addr->str) == 0;
+        log_info(server->logger, "[WORKER %d] CHECK DNS: %d", getpid(), dns_confirmed);
+        log_info(server->logger, "[WORKER %d] host: %s; sent_host: %s", getpid(), server->client_info->addr->str, data->str);
+    }
+    if (dns_confirmed) {
+        if (server_set_output_buf(server, dns_confirmed_msg, strlen(dns_confirmed_msg)) < 0) {
+            log_error(server->logger, "[WORKER %d] error in server_set_output_buf.", getpid());
+            return client_info_set_state(server->client_info, SERVER_FSM_EV_INVALID);
+        }
+    }
+    else {
+        if (server_set_output_buf(server, dns_error_msg, strlen(dns_error_msg)) < 0) {
+            log_error(server->logger, "[WORKER %d] error in server_set_output_buf.", getpid());
+            return client_info_set_state(server->client_info, SERVER_FSM_EV_INVALID);
+        }
+    }
+
+    return client_info_set_state(server->client_info, next_state);
+}
+
 te_server_fsm_state fsm_handle_accepted(server_t* server, te_server_fsm_state next_state)
 {
     log_info(server->logger, "[WORKER %d] get 'accepted', next state: %d", getpid(), next_state);
@@ -16,38 +45,14 @@ te_server_fsm_state fsm_handle_helo(server_t* server, string_t *data, te_server_
 {
     log_info(server->logger, "[WORKER %d] get HELO cmd, next state: %d", getpid(), next_state);
 
-    //TODO process data to check addr and ip
-    if (server->client_info->addr == NULL)
-        log_warning(server->logger, "[WORKER %d] No revers DNS record.", getpid());
-    else if (data == NULL)
-        log_warning(server->logger, "[WORKER %d] No domain in HELO.", getpid());
-    else {
-        //TODO trim data string here, or in parser...
-        log_info(server->logger, "[WORKER %d] CHECK DNS: %d", getpid(), strcmp(data->str, server->client_info->addr->str));
-        log_info(server->logger, "[WORKER %d] host: %s; sent_host: %s", getpid(), server->client_info->addr->str, data->str);
-    }
-    
-
-    if (server_set_output_buf(server, SMTP_MSG_HELO, strlen(SMTP_MSG_HELO)) < 0) {
-        log_error(server->logger, "[WORKER %d] error in server_set_output_buf.", getpid());
-        return client_info_set_state(server->client_info, SERVER_FSM_EV_INVALID);
-    }
-
-    return client_info_set_state(server->client_info, next_state);
+    return handle_helo_ehlo(server, data, next_state, SMTP_MSG_HELO, SMTP_MSG_HELO_NO_DNS);
 }
 
 te_server_fsm_state fsm_handle_ehlo(server_t* server, string_t *data, te_server_fsm_state next_state) 
 {
     log_info(server->logger, "[WORKER %d] get EHLO cmd, next state: %d", getpid(), next_state);
 
-    //TODO process data to check addr and ip
-
-    if (server_set_output_buf(server, SMTP_MSG_EHLO, strlen(SMTP_MSG_EHLO)) < 0) {
-        log_error(server->logger, "[WORKER %d] error in server_set_output_buf.", getpid());
-        return client_info_set_state(server->client_info, SERVER_FSM_EV_INVALID);
-    }
-
-    return client_info_set_state(server->client_info, next_state);
+    return handle_helo_ehlo(server, data, next_state, SMTP_MSG_EHLO, SMTP_MSG_EHLO_NO_DNS);
 }
 
 te_server_fsm_state fsm_handle_mail(server_t* server, string_t *data, te_server_fsm_state next_state)
