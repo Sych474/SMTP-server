@@ -18,6 +18,7 @@ typedef struct address_struct
 
 
 address_t *address_init(string_t *str, char *local_domain);
+address_t *address_copy(address_t *address);
 void address_free(address_t *address);
 char *address_get_str(address_t *address);
 string_t *address_get_username(address_t *address);

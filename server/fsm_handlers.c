@@ -22,7 +22,7 @@ te_server_fsm_state fsm_handle_helo(server_t* server, string_t *data, te_server_
     else if (data == NULL)
         log_warning(server->logger, "[WORKER %d] No domain in HELO.", getpid());
     else {
-        // todo trim data string here, or in parser...
+        //TODO trim data string here, or in parser...
         log_info(server->logger, "[WORKER %d] CHECK DNS: %d", getpid(), strcmp(data->str, server->client_info->addr->str));
         log_info(server->logger, "[WORKER %d] host: %s; sent_host: %s", getpid(), server->client_info->addr->str, data->str);
     }
@@ -84,8 +84,9 @@ te_server_fsm_state fsm_handle_rcpt(server_t* server, string_t *data, te_server_
         return client_info_set_state(server->client_info, SERVER_FSM_EV_INVALID);
     }
 
-    //TODO process rcpt max count 
+    //TODO process rcpt max count and other errors 
     mail_add_rcpt(server->client_info->mail, address);
+    address_free(address);
     log_info(server->logger, "[WORKER %d] get RCPT cmd, address: %s; next state: %d", getpid(), address_get_str(address), next_state);
 
     if (server_set_output_buf(server, SMTP_MSG_RCPT, strlen(SMTP_MSG_RCPT)) < 0) {

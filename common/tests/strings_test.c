@@ -154,7 +154,7 @@ void string_clear_test()
     string_free(str);
 }
 
-void strings_free_test_for_null()
+void string_free_test_for_null()
 {
     // Arrange 
     string_t *str = NULL;
@@ -162,6 +162,98 @@ void strings_free_test_for_null()
     // Act & Assert
     string_free(str);    
 }
+
+#define TEST_STR_TRIM_EMPTY ""
+#define TEST_STR_TRIM_EMPTY_EXPECTED ""
+
+void string_trim_test_empty()
+{
+    // Arrange 
+    string_t *str = string_create(TEST_STR_TRIM_EMPTY, strlen(TEST_STR_TRIM_EMPTY));
+
+    // Act 
+    string_trim(str);
+
+    // Assert
+    CU_ASSERT_STRING_EQUAL(str->str, TEST_STR_TRIM_EMPTY_EXPECTED);
+
+    // Finalize
+    string_free(str);
+}
+
+#define TEST_STR_TRIM_SPACES "  some text   "
+#define TEST_STR_TRIM_SPACES_EXPECTED "some text"
+
+void string_trim_test_spaces()
+{
+    // Arrange 
+    string_t *str = string_create(TEST_STR_TRIM_SPACES, strlen(TEST_STR_TRIM_SPACES));
+
+    // Act 
+    string_trim(str);
+
+    // Assert
+    CU_ASSERT_STRING_EQUAL(str->str, TEST_STR_TRIM_SPACES_EXPECTED);
+
+    // Finalize
+    string_free(str);
+}
+
+#define TEST_STR_TRIM_TABS "\t\tsome\ttext\t"
+#define TEST_STR_TRIM_TABS_EXPECTED "some\ttext"
+
+void string_trim_test_tabs()
+{
+    // Arrange 
+    string_t *str = string_create(TEST_STR_TRIM_TABS, strlen(TEST_STR_TRIM_TABS));
+
+    // Act 
+    string_trim(str);
+
+    // Assert
+    CU_ASSERT_STRING_EQUAL(str->str, TEST_STR_TRIM_TABS_EXPECTED);
+    
+    // Finalize
+    string_free(str);
+}
+
+#define TEST_STR_TRIM_NO "abacaba"
+#define TEST_STR_TRIM_NO_EXPECTED "abacaba"
+
+void string_trim_test_no_trim()
+{
+    // Arrange 
+    string_t *str = string_create(TEST_STR_TRIM_NO, strlen(TEST_STR_TRIM_NO));
+
+    // Act 
+    string_trim(str);
+
+    // Assert
+    CU_ASSERT_STRING_EQUAL(str->str, TEST_STR_TRIM_NO_EXPECTED);
+
+    // Finalize
+    string_free(str);
+}
+
+#define TEST_STR_TRIM_FULL "  \t  \t   "
+#define TEST_STR_TRIM_FULL_EXPECTED ""
+
+void string_trim_test_full_trim()
+{
+    // Arrange 
+    string_t *str = string_create(TEST_STR_TRIM_FULL, strlen(TEST_STR_TRIM_FULL));
+
+    // Act 
+    string_trim(str);
+
+    // Assert
+    CU_ASSERT_STRING_EQUAL(str->str, TEST_STR_TRIM_FULL_EXPECTED);
+
+    // Finalize
+    string_free(str);
+}
+
+//TODO add tests for string_trim_by_arr (tested in string_trim tests, but for full correct tests need own tests for function)
 
 int strings_test_fill_suite(CU_pSuite suite) 
 {
@@ -174,7 +266,12 @@ int strings_test_fill_suite(CU_pSuite suite)
         !CU_add_test(suite, "string_set test with offset", string_set_test_with_offset) ||
         !CU_add_test(suite, "string_set test with set smaller str", string_set_test_lower) ||
         !CU_add_test(suite, "string_clear test", string_clear_test) ||
-        !CU_add_test(suite, "string_free test for null", strings_free_test_for_null))
+        !CU_add_test(suite, "string_free test for null", string_free_test_for_null) ||
+        !CU_add_test(suite, "string_trim test with empty string", string_trim_test_empty) ||
+        !CU_add_test(suite, "string_trim test with spaces string", string_trim_test_spaces) ||
+        !CU_add_test(suite, "string_trim test with tabs string", string_trim_test_tabs) ||
+        !CU_add_test(suite, "string_trim test for string that dont need trim", string_trim_test_no_trim) ||
+        !CU_add_test(suite, "string_trim test with string from spaces and tabs", string_trim_test_full_trim))
         return CU_get_error();
 
     return CUE_SUCCESS;

@@ -95,3 +95,53 @@ void string_clear(string_t *str)
 {
     memset(str->str, 0, str->str_size);
 }
+
+void string_trim(string_t *str)
+{
+    char arr[2] = {' ', '\t'};
+    size_t arr_size = 2; 
+    
+    string_trim_by_arr(str, arr, arr_size);
+}
+
+void string_trim_by_arr(string_t *str, const char *arr, size_t arr_size)
+{
+    size_t str_len = strlen(str->str);
+    if (str_len == 0)
+        return; 
+
+    size_t str_start, str_end;
+    int flag = 1;
+    for (str_start = 0; str_start < str_len; str_start++) {
+        flag = 0; // char is not from arr
+        for (size_t i = 0; i < arr_size; i++) {
+            if (str->str[str_start] == arr[i]) {
+                flag = 1; // found char 
+                break; 
+            }
+        }
+        if (!flag)
+            break;
+    }
+
+    if (str_start == str_len) { // string contain only chars from arr {
+        string_clear(str);
+        return;
+    }
+
+    flag = 1;
+    for (str_end = str_len - 1; str_end >= 0; str_end--) {
+        flag = 0; // char is not from arr
+        for (size_t i = 0; i < arr_size; i++) {
+            if (str->str[str_end] == arr[i]) {
+                flag = 1; // found char 
+                break; 
+            }
+        }
+        if (!flag)
+            break;
+    }
+    size_t new_len = str_end - str_start + 1;
+    memmove(str->str, str->str + str_start, new_len);
+    memset(str->str + new_len, 0, str_len - new_len);
+}

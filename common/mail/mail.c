@@ -36,7 +36,9 @@ int mail_add_rcpt(mail_t *mail, address_t *rcpt)
     if (mail->rcpts_cnt >= MAIL_MAX_RCPTS)
         return -1; 
     
-    mail->rcpts[mail->rcpts_cnt] = rcpt;
+    mail->rcpts[mail->rcpts_cnt] = address_copy(rcpt);
+    if (!mail->rcpts[mail->rcpts_cnt])
+        return -2;
     mail->rcpts_cnt++;
     return 0;
 }

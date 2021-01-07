@@ -54,4 +54,18 @@ int string_set(string_t *dst, char *src, size_t len, size_t offset);
 **/
 void string_clear(string_t *str);
 
+/**
+ * @brief trim string (remove spaces and \t from start and end). 
+**/
+void string_trim(string_t *str);
+
+/**
+ * @brief trim string using values from arr.
+ * Example: 
+ * str = "abcabcab"
+ * arr = ['a', 'b', 'e']
+ * result = "cabc" 
+**/
+void string_trim_by_arr(string_t *str, const char *arr, size_t arr_size);
+
 #endif
