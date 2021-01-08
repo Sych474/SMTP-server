@@ -1,5 +1,5 @@
-#ifndef STRINGS_TEST_INCLUDE_GUARD
-#define STRINGS_TEST_INCLUDE_GUARD
+#ifndef COMMON_TESTS_STRINGS_TEST_H_
+#define COMMON_TESTS_STRINGS_TEST_H_
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -8,7 +8,7 @@
 #include "../strings/strings.h"
 
 int strings_test_init();
-int strings_test_free(); 
-int strings_test_fill_suite(CU_pSuite suite); 
+int strings_test_free();
+int strings_test_fill_suite(CU_pSuite suite);
 
-#endif
+#endif  // COMMON_TESTS_STRINGS_TEST_H_

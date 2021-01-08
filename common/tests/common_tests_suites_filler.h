@@ -1,5 +1,5 @@
-#ifndef COMMON_TESTS_SUITES_FILLER_INCLUDE_GUARD
-#define COMMON_TESTS_SUITES_FILLER_INCLUDE_GUARD
+#ifndef COMMON_TESTS_COMMON_TESTS_SUITES_FILLER_H_
+#define COMMON_TESTS_COMMON_TESTS_SUITES_FILLER_H_
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -14,4 +14,4 @@
 
 int fill_common_test_suites();
 
-#endif
+#endif  // COMMON_TESTS_COMMON_TESTS_SUITES_FILLER_H_

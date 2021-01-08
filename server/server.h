@@ -1,5 +1,5 @@
-#ifndef SERVER_INCLUDE_GUARD
-#define SERVER_INCLUDE_GUARD
+#ifndef SERVER_SERVER_H_
+#define SERVER_SERVER_H_
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -40,23 +40,23 @@
 #define SERVER_MAIL_DIR         "/home/netroot/test_mail"
 
 typedef enum server_ip_version_enum {
-    SERVER_IPV4 = 0, 
+    SERVER_IPV4 = 0,
     SERVER_IPV6 = 1
 } server_ip_version_t;
 
-typedef struct server_struct {    
+typedef struct server_struct {
     server_ip_version_t ip_version;
     logger_t *logger;
-    parser_t *parser; 
-    struct pollfd fds[POLL_FDS_COUNT]; 
+    parser_t *parser;
+    struct pollfd fds[POLL_FDS_COUNT];
     client_info_t *client_info;
     int is_master;
 } server_t;
 
-server_t *server_init(int port, int signal_fd, logger_t *logger, server_ip_version_t ip_version); 
+server_t *server_init(int port, int signal_fd, logger_t *logger, server_ip_version_t ip_version);
 
 int server_start(server_t *server, int port);
 
 int server_set_output_buf(server_t *server, char* msg, size_t msg_size);
 
-#endif
+#endif  // SERVER_SERVER_H_

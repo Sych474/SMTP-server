@@ -1,5 +1,5 @@
-#ifndef ADDRESS_TEST_INCLUDE_GUARD
-#define ADDRESS_TEST_INCLUDE_GUARD
+#ifndef COMMON_TESTS_ADDRESS_TEST_H_
+#define COMMON_TESTS_ADDRESS_TEST_H_
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -9,7 +9,7 @@
 #include "../address/address.h"
 
 int address_test_init();
-int address_test_free(); 
-int address_test_fill_suite(CU_pSuite suite); 
+int address_test_free();
+int address_test_fill_suite(CU_pSuite suite);
 
-#endif
+#endif  // COMMON_TESTS_ADDRESS_TEST_H_

@@ -1,5 +1,5 @@
-#ifndef MAIL_TEST_INCLUDE_GUARD
-#define MAIL_TEST_INCLUDE_GUARD
+#ifndef COMMON_TESTS_MAIL_TEST_H_
+#define COMMON_TESTS_MAIL_TEST_H_
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -8,7 +8,7 @@
 #include "../mail/mail.h"
 
 int mail_test_init();
-int mail_test_free(); 
-int mail_test_fill_suite(CU_pSuite suite); 
+int mail_test_free();
+int mail_test_fill_suite(CU_pSuite suite);
 
-#endif
+#endif  // COMMON_TESTS_MAIL_TEST_H_

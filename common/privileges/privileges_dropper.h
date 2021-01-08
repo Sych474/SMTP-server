@@ -1,5 +1,5 @@
-#ifndef PRIVILEGES_DROPPER_INCLUDE_GUARD
-#define PRIVILEGES_DROPPER_INCLUDE_GUARD
+#ifndef COMMON_PRIVILEGES_PRIVILEGES_DROPPER_H_
+#define COMMON_PRIVILEGES_PRIVILEGES_DROPPER_H_
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -9,4 +9,4 @@
 
 int drop_privileges(logger_t *logger);
 
-#endif
+#endif  // COMMON_PRIVILEGES_PRIVILEGES_DROPPER_H_

@@ -1,9 +1,9 @@
-#ifndef PARSER_INCLUDE_GUARD
-#define PARSER_INCLUDE_GUARD
+#ifndef SERVER_PARSER_H_
+#define SERVER_PARSER_H_
 
 #include <string.h>
 #include <stdlib.h>
-#include <pcre.h>  
+#include <pcre.h>
 #include <stdio.h>
 
 #include "smtp.h"
@@ -41,10 +41,9 @@ typedef struct parser_struct {
 } parser_t;
 
 typedef struct parser_result_struct {
-    smtp_cmds_t smtp_cmd; 
-    string_t *data; 
+    smtp_cmds_t smtp_cmd;
+    string_t *data;
 } parser_result_t;
-
 
 parser_t *parser_init();
 void parser_finalize(parser_t * parser);
@@ -54,4 +53,4 @@ char* parser_parse_end_of_mail(char* msg);
 
 void parser_result_free(parser_result_t *parser);
 
-#endif
+#endif  // SERVER_PARSER_H_

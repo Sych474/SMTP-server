@@ -1,5 +1,5 @@
-#ifndef STRINGS_INCLUDE_GUARD
-#define STRINGS_INCLUDE_GUARD
+#ifndef COMMON_STRINGS_STRINGS_H_
+#define COMMON_STRINGS_STRINGS_H_
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -7,11 +7,9 @@
 
 #define STRING_EXPAND_MULTIPLIER 2
 
-
-typedef struct string_struct
-{
-    char *str; 
-    size_t str_size; // allocated memory for str
+typedef struct string_struct {
+    char *str;
+    size_t str_size;  // allocated memory for str
 } string_t;
 
 /**
@@ -32,9 +30,9 @@ void string_free(string_t *str);
 /**
  * @brief expand str to size or more bytes, if str->str_size is already more then size do nothing =)
 **/
-int string_expand_memory_to(string_t *str, size_t size); 
+int string_expand_memory_to(string_t *str, size_t size);
 
-/** 
+/**
  * @brief add addition string to the end of str, expand it if it is necessary.
 **/
 int string_concat(string_t *str, char *addition, size_t addition_len);
@@ -55,17 +53,17 @@ int string_set(string_t *dst, char *src, size_t len, size_t offset);
 void string_clear(string_t *str);
 
 /**
- * @brief trim string (remove spaces and \t from start and end). 
+ * @brief trim string (remove spaces and \t from start and end).
 **/
 void string_trim(string_t *str);
 
 /**
  * @brief trim string using values from arr.
- * Example: 
+ * Example:
  * str = "abcabcab"
  * arr = ['a', 'b', 'e']
- * result = "cabc" 
+ * result = "cabc"
 **/
 void string_trim_by_arr(string_t *str, const char *arr, size_t arr_size);
 
-#endif
+#endif  // COMMON_STRINGS_STRINGS_H_

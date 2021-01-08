@@ -1,6 +1,6 @@
 
-#ifndef SMTP_INCLUDE_GUARD
-#define SMTP_INCLUDE_GUARD
+#ifndef SERVER_SMTP_H_
+#define SERVER_SMTP_H_
 
 #define SMTP_MSG_ACCEPTED       "220 SMTP server is ready! \r\n"
 #define SMTP_MSG_HELO           "250 OK (HELO)\r\n"
@@ -34,4 +34,4 @@ typedef enum smtp_cmds_enum {
 
 #define SMTP_CMD_CNT 8
 
-#endif
+#endif  // SERVER_SMTP_H_

@@ -9,15 +9,16 @@ BUILD_DIR 			:= build
 TEST_BUILD_DIR  	:= test_build
 COMMON_TESTS_DIR    := ../common
 
-SRC_DIRS  	 		:= . ../common/logger ../common/strings ../common/mail ../common/address ./autogen ../common/privileges ./unit_tests ../common/tests
-STYLE_FILES 		:= $(wildcard $(addsuffix /*.c,$(filter-out ./autogen, $(SRC_DIRS))))
+SRC_DIRS  	 		:= . ../common/logger ../common/strings ../common/mail ../common/address ./autogen ../common/privileges ./tests/unit ../common/tests
+STYLE_DIRS			:= $(filter-out ./autogen, $(SRC_DIRS))
+STYLE_FILES 		:= $(wildcard $(addsuffix /*.c, $(STYLE_DIRS))) $(wildcard $(addsuffix /*.h, $(STYLE_DIRS)))
 
 SRC_DIRS     		:= $(addprefix ../,$(SRC_DIRS))
 SRC_FILES 			:= $(wildcard $(addsuffix /*.c,$(SRC_DIRS)))
 OBJ_FILES 			:= $(notdir $(patsubst %.c,%.o, $(SRC_FILES)))
 
 # TEST_OBJ_FILES нужны для того, чтобы удалить их из целей server
-TEST_DIRS			:= ./unit_tests ../common/tests
+TEST_DIRS			:= ./tests/unit ../common/tests
 TEST_DIRS     		:= $(addprefix ../,$(TEST_DIRS))
 TEST_OBJ_FILES      := $(notdir $(patsubst %.c,%.o, $(wildcard $(addsuffix /*.c,$(TEST_DIRS)))))
 

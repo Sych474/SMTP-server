@@ -1,5 +1,5 @@
-#ifndef FSM_HANDLERS_INCLUDE_GUARD
-#define FSM_HANDLERS_INCLUDE_GUARD
+#ifndef SERVER_FSM_HANDLERS_H_
+#define SERVER_FSM_HANDLERS_H_
 
 #include "server.h"
 #include "smtp.h"
@@ -25,4 +25,4 @@ te_server_fsm_state fsm_handle_syntax_error(server_t* server, te_server_fsm_stat
 te_server_fsm_state fsm_handle_invalid(server_t* server, te_server_fsm_state next_state);
 te_server_fsm_state fsm_handle_cmd_error(server_t* server, te_server_fsm_state next_state);
 
-#endif
+#endif  // SERVER_FSM_HANDLERS_H_
