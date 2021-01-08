@@ -23,8 +23,8 @@ typedef struct client_info_struct {
     te_server_fsm_state fsm_state;
 } client_info_t;
 
-void client_info_finalize(client_info_t *client_info);
 client_info_t *client_info_init(string_t *addr);
+void client_info_free(client_info_t *client_info);
 
 int client_info_set_output_buf(client_info_t *client_info, char *output, size_t len);
 int client_info_concat_input_buf(client_info_t *client_info, char *input, size_t len);

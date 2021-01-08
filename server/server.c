@@ -180,25 +180,22 @@ int worker_process(server_t *server) {
 }
 
 void server_finalize(server_t *server) {
-    for (int i = 0; i < POLL_FDS_COUNT; i++)
-        if (server->fds[i].fd != -1)
-            close(server->fds[i].fd);
+    if (server) {
+        for (int i = 0; i < POLL_FDS_COUNT; i++)
+            if (server->fds[i].fd != -1)
+                close(server->fds[i].fd);
 
-    if (server->client_info) {
-        client_info_finalize(server->client_info);
-        free(server->client_info);
+        client_info_free(server->client_info);
+        parser_free(server->parser);
+
+        if (server->is_master) {
+            // wait workers
+            int wpid, status = 0;
+            while ((wpid = waitpid(-1, &status, WNOHANG)) > 0)
+                continue;
+        }
+        log_info(server->logger, "[PROCESS %d] stopped.", getpid());
     }
-
-    if (server->is_master) {
-        // wait workers
-        int wpid, status = 0;
-        while ((wpid = waitpid(-1, &status, WNOHANG)) > 0)
-            continue;
-
-        parser_finalize(server->parser);
-        free(server->parser);
-    }
-    log_info(server->logger, "[PROCESS %d] stopped.", getpid());
 }
 
 int server_set_output_buf(server_t *server, char* msg, size_t msg_size) {
@@ -304,7 +301,6 @@ void recv_cmd_from_client(server_t *server, char *buf) {
 }
 
 int send_to_client(server_t *server) {
-    // TODO(sych) add bufferizig for messages (if message len is larger then BUFFER_SIZE)
     char buf[BUFFER_SIZE];
     memcpy(buf, server->client_info->output_buf->str, BUFFER_SIZE);
 

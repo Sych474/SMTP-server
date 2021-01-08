@@ -23,15 +23,13 @@ parser_t *parser_init() {
         parser->compiled_regexps[i].regexp =
             pcre_compile(smtp_regexps[i], PCRE_ANCHORED, &pcre_error, &pcre_error_offset, NULL);
         if (pcre_error != NULL) {
-            parser_finalize(parser);
-            free(parser);
+            parser_free(parser);
             return NULL;
         }
 
         parser->compiled_regexps[i].extra = pcre_study(parser->compiled_regexps[i].regexp, 0, &pcre_error);
         if (pcre_error != NULL) {
-            parser_finalize(parser);
-            free(parser);
+            parser_free(parser);
             return NULL;
         }
     }
@@ -76,13 +74,16 @@ parser_result_t *parser_parse(parser_t *parser, char* msg, int msg_len) {
     return NULL;
 }
 
-void parser_finalize(parser_t *parser) {
-    for (int i = 0; i < SMTP_CMD_CNT; i++) {
-        if (parser->compiled_regexps[i].regexp != NULL)
-            pcre_free(parser->compiled_regexps[i].regexp);
+void parser_free(parser_t *parser) {
+    if (parser) {
+        for (int i = 0; i < SMTP_CMD_CNT; i++) {
+            if (parser->compiled_regexps[i].regexp != NULL)
+                pcre_free(parser->compiled_regexps[i].regexp);
 
-        if (parser->compiled_regexps[i].extra != NULL)
-            pcre_free_study(parser->compiled_regexps[i].extra);
+            if (parser->compiled_regexps[i].extra != NULL)
+                pcre_free_study(parser->compiled_regexps[i].extra);
+        }
+        free(parser);
     }
 }
 

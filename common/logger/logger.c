@@ -156,8 +156,10 @@ void log_debug(logger_t *logger, const char *format, ...) {
 }
 
 void logger_finalize(logger_t *logger) {
-    msgctl(logger->mq, IPC_RMID, NULL);
+    if (logger) {
+        msgctl(logger->mq, IPC_RMID, NULL);
 
-    if (logger->fd != NULL)
-        fclose(logger->fd);
+        if (logger->fd != NULL)
+            fclose(logger->fd);
+    }
 }

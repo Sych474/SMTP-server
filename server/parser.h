@@ -46,7 +46,7 @@ typedef struct parser_result_struct {
 } parser_result_t;
 
 parser_t *parser_init();
-void parser_finalize(parser_t * parser);
+void parser_free(parser_t * parser);
 parser_result_t *parser_parse(parser_t * parser, char* msg, int msg_len);
 char* parser_parse_end_of_line(char* msg);
 char* parser_parse_end_of_mail(char* msg);
