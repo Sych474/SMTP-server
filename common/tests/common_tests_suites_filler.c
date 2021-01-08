@@ -1,24 +1,6 @@
-#include <stdlib.h>
-#include <stdio.h>
+#include "common_tests_suites_filler.h"
 
-#include "maildir_test.h"
-#include "mail_test.h"
-#include "address_test.h"
-#include "strings_test.h"
-
-#include <CUnit/Basic.h>
-#include <CUnit/Automated.h>
-
-#define C_UNIT_FILENAME_ROOT "CUnit"
-
-int main (int argc, char *argv[])
-{
-    printf("Starting Common tests..\n");
-
-    if (CU_initialize_registry() != CUE_SUCCESS) {
-        perror("CU_initialize_registry");
-        return CU_get_error();
-    }
+int fill_common_test_suites() {
     int result;
     CU_pSuite address_suite = CU_add_suite("Address unit tests", address_test_init, address_test_free);
     if (!address_suite) {
@@ -59,16 +41,5 @@ int main (int argc, char *argv[])
         CU_cleanup_registry();
         return result;
     }
-
-    CU_set_output_filename(C_UNIT_FILENAME_ROOT);
-    CU_list_tests_to_file();
-    CU_automated_run_tests();
-    
-    CU_basic_set_mode(CU_BRM_VERBOSE);
-    CU_basic_run_tests();
-
-    CU_cleanup_registry();
-
-    printf("Finish Common tests .\n");
     return 0;
 }

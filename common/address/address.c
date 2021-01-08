@@ -6,7 +6,6 @@ const char address_trim_chars[] = {' ', '\t', '<', '>', '"'};
 const size_t address_trim_chars_size = 5;
 
 address_t *address_init(string_t *str, char *local_domain) {
-    // TODO(sych) приведение адреса к единому виду
     address_t *address = malloc(sizeof(address_t));
     if (!address)
         return NULL;
@@ -17,7 +16,6 @@ address_t *address_init(string_t *str, char *local_domain) {
         return NULL;
     }
 
-    // TODO(sych) использовать приведенную к стандарту строку
     string_trim_by_arr(address->str, address_trim_chars, address_trim_chars_size);
 
     address->type = get_address_type(str->str, local_domain);

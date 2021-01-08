@@ -2,25 +2,23 @@
 
 #define TEST_STR "test str"
 
-void string_init_test() 
-{
-    //Arrange 
+void string_init_test() {
+    // Arrange
     size_t size = 5;
 
-    // Act 
+    // Act
     string_t *str = string_init(size);
 
     // Assert
     CU_ASSERT_EQUAL(str->str_size, size);
-    CU_ASSERT_EQUAL(strlen(str->str), 0); // string is clear 
+    CU_ASSERT_EQUAL(strlen(str->str), 0);
 
     // Finalize
     string_free(str);
 }
 
-void string_create_test() 
-{
-    // Act 
+void string_create_test() {
+    // Act
     string_t *str = string_create(TEST_STR, strlen(TEST_STR));
 
     // Assert
@@ -31,14 +29,14 @@ void string_create_test()
     string_free(str);
 }
 
-void string_expand_memory_to_test()
-{
-    // Arrange 
+void string_expand_memory_to_test() {
+    // Arrange
     string_t *str = string_create(TEST_STR, strlen(TEST_STR));
-    size_t new_size = strlen(TEST_STR) * 3; 
-    size_t expected_size = (strlen(TEST_STR) + 1) * 4; // because multiplication on 2 
+    size_t new_size = strlen(TEST_STR) * 3;
+    size_t expected_size = (strlen(TEST_STR) + 1) * 4;
+    // (strlen(TEST_STR) + 1) * 4 because multiplication on 2
 
-    // Act 
+    // Act
     string_expand_memory_to(str, new_size);
 
     // Assert
@@ -52,12 +50,11 @@ void string_expand_memory_to_test()
 #define TEST_ADDITION " ADDITION"
 #define TEST_STR_WITH_ADDITION "test str ADDITION"
 
-void string_concat_test()
-{
-    // Arrange 
+void string_concat_test() {
+    // Arrange
     string_t *str = string_create(TEST_STR, strlen(TEST_STR));
 
-    // Act 
+    // Act
     string_concat(str, TEST_ADDITION, strlen(TEST_ADDITION));
 
     // Assert
@@ -70,12 +67,11 @@ void string_concat_test()
 #define TEST_STR_TRIM_SIZE 5
 #define TEST_STR_TRIMMED "str"
 
-void string_begining_trim_test()
-{
-    // Arrange 
+void string_begining_trim_test() {
+    // Arrange
     string_t *str = string_create(TEST_STR, strlen(TEST_STR));
 
-    // Act 
+    // Act
     string_begining_trim(str, TEST_STR_TRIM_SIZE);
 
     // Assert
@@ -87,12 +83,11 @@ void string_begining_trim_test()
 
 #define TEST_STR_SET "some new text set"
 
-void string_set_test()
-{
-    // Arrange 
+void string_set_test() {
+    // Arrange
     string_t *str = string_create(TEST_STR, strlen(TEST_STR));
 
-    // Act 
+    // Act
     string_set(str, TEST_STR_SET, strlen(TEST_STR_SET), 0);
 
     // Assert
@@ -105,12 +100,11 @@ void string_set_test()
 #define TEST_STR_SET_OFFSET 5
 #define TEST_STR_SET_WITH_OFFSET "new text set"
 
-void string_set_test_with_offset()
-{
-    // Arrange 
+void string_set_test_with_offset() {
+    // Arrange
     string_t *str = string_create(TEST_STR, strlen(TEST_STR));
 
-    // Act 
+    // Act
     string_set(str, TEST_STR_SET, strlen(TEST_STR_SET), TEST_STR_SET_OFFSET);
 
     // Assert
@@ -123,12 +117,11 @@ void string_set_test_with_offset()
 #define TEST_STR_SET_CLEAN "lol"
 
 // test that old value is cleaned before copy
-void string_set_test_lower()
-{
-    // Arrange 
+void string_set_test_lower() {
+    // Arrange
     string_t *str = string_create(TEST_STR, strlen(TEST_STR));
 
-    // Act 
+    // Act
     string_set(str, TEST_STR_SET_CLEAN, strlen(TEST_STR_SET_CLEAN), 0);
 
     // Assert
@@ -138,40 +131,37 @@ void string_set_test_lower()
     string_free(str);
 }
 
-void string_clear_test()
-{
-    // Arrange 
+void string_clear_test() {
+    // Arrange
     string_t *str = string_create(TEST_STR, strlen(TEST_STR));
 
-    // Act 
+    // Act
     string_clear(str);
 
     // Assert
-    CU_ASSERT_EQUAL(strlen(str->str), 0); //string is clear
+    CU_ASSERT_EQUAL(strlen(str->str), 0);
     CU_ASSERT_EQUAL(str->str_size, strlen(TEST_STR) + 1);
 
     // Finalize
     string_free(str);
 }
 
-void string_free_test_for_null()
-{
-    // Arrange 
+void string_free_test_for_null() {
+    // Arrange
     string_t *str = NULL;
-    
+
     // Act & Assert
-    string_free(str);    
+    string_free(str);
 }
 
 #define TEST_STR_TRIM_EMPTY ""
 #define TEST_STR_TRIM_EMPTY_EXPECTED ""
 
-void string_trim_test_empty()
-{
-    // Arrange 
+void string_trim_test_empty() {
+    // Arrange
     string_t *str = string_create(TEST_STR_TRIM_EMPTY, strlen(TEST_STR_TRIM_EMPTY));
 
-    // Act 
+    // Act
     string_trim(str);
 
     // Assert
@@ -184,12 +174,11 @@ void string_trim_test_empty()
 #define TEST_STR_TRIM_SPACES "  some text   "
 #define TEST_STR_TRIM_SPACES_EXPECTED "some text"
 
-void string_trim_test_spaces()
-{
-    // Arrange 
+void string_trim_test_spaces() {
+    // Arrange
     string_t *str = string_create(TEST_STR_TRIM_SPACES, strlen(TEST_STR_TRIM_SPACES));
 
-    // Act 
+    // Act
     string_trim(str);
 
     // Assert
@@ -202,17 +191,16 @@ void string_trim_test_spaces()
 #define TEST_STR_TRIM_TABS "\t\tsome\ttext\t"
 #define TEST_STR_TRIM_TABS_EXPECTED "some\ttext"
 
-void string_trim_test_tabs()
-{
-    // Arrange 
+void string_trim_test_tabs() {
+    // Arrange
     string_t *str = string_create(TEST_STR_TRIM_TABS, strlen(TEST_STR_TRIM_TABS));
 
-    // Act 
+    // Act
     string_trim(str);
 
     // Assert
     CU_ASSERT_STRING_EQUAL(str->str, TEST_STR_TRIM_TABS_EXPECTED);
-    
+
     // Finalize
     string_free(str);
 }
@@ -220,12 +208,11 @@ void string_trim_test_tabs()
 #define TEST_STR_TRIM_NO "abacaba"
 #define TEST_STR_TRIM_NO_EXPECTED "abacaba"
 
-void string_trim_test_no_trim()
-{
-    // Arrange 
+void string_trim_test_no_trim() {
+    // Arrange
     string_t *str = string_create(TEST_STR_TRIM_NO, strlen(TEST_STR_TRIM_NO));
 
-    // Act 
+    // Act
     string_trim(str);
 
     // Assert
@@ -238,12 +225,11 @@ void string_trim_test_no_trim()
 #define TEST_STR_TRIM_FULL "  \t  \t   "
 #define TEST_STR_TRIM_FULL_EXPECTED ""
 
-void string_trim_test_full_trim()
-{
-    // Arrange 
+void string_trim_test_full_trim() {
+    // Arrange
     string_t *str = string_create(TEST_STR_TRIM_FULL, strlen(TEST_STR_TRIM_FULL));
 
-    // Act 
+    // Act
     string_trim(str);
 
     // Assert
@@ -253,10 +239,10 @@ void string_trim_test_full_trim()
     string_free(str);
 }
 
-//TODO add tests for string_trim_by_arr (tested in string_trim tests, but for full correct tests need own tests for function)
+// TODO(sych) add tests for string_trim_by_arr
+// (tested in string_trim tests, but for full correct tests need own tests for function)
 
-int strings_test_fill_suite(CU_pSuite suite) 
-{
+int strings_test_fill_suite(CU_pSuite suite) {
     if (!CU_add_test(suite, "string_init test", string_init_test) ||
         !CU_add_test(suite, "string_create test", string_create_test) ||
         !CU_add_test(suite, "string_expand_memory_to test", string_expand_memory_to_test) ||
@@ -277,11 +263,10 @@ int strings_test_fill_suite(CU_pSuite suite)
     return CUE_SUCCESS;
 }
 
-int strings_test_init() 
-{
+int strings_test_init() {
     return 0;
 }
-int strings_test_free() 
-{
+
+int strings_test_free() {
     return 0;
-} 
+}
