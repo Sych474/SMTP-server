@@ -9,9 +9,31 @@ cookie = "void *data_str";
 
 /* Состояния init, invalid, done в fsn есть по умолчанию */
 /* Состояние invalid - используется для отслеживания ошибок */
-state  = created, hello, mail_from, rcpt_to, data, quit, timeout;
-event  = accepted, cmd_helo, cmd_ehlo, cmd_mail, cmd_rcpt, cmd_data, cmd_rset, cmd_vrfy, cmd_quit,
-        mail_end, con_lost, timeout, con_close, syntax_error, cmd_error;
+state  =
+        created,        /* Состояние готовности к приему подключений */
+        hello,          /* Состояние "принята команда HELO/EHLO" */
+        mail_from,      /* Состояние "принята команда MAIL FROM" */
+        rcpt_to,        /* Состояние "принята команда RCPT TO" */
+        data,           /* Состояние "принята команда MAIL DATA" (осуществляется прием данных) */
+        quit,           /* Состояние "принята команда MAIL QUIT" */
+        timeout;        /* Состояние выхода по таймауту */
+
+event  =
+        accepted,       /* Принят новый клиент */
+        cmd_helo,       /* Получена команда HELO */
+        cmd_ehlo,       /* Получена команда EHLO */
+        cmd_mail,       /* Получена команда MAIL FROM */
+        cmd_rcpt,       /* Получена команда RCPT TO */
+        cmd_data,       /* Получена команда DATA */
+        cmd_rset,       /* Получена команда RSET */
+        cmd_vrfy,       /* Получена команда VRFY */
+        cmd_quit,       /* Получена команда QUIT */
+        mail_end,       /* закончена секция DATA */
+        con_lost,       /* соединение потеряно (по вине клиента) */
+        timeout,        /* таймаут */
+        con_close,      /* соединение закрыто */
+        syntax_error,   /* синтаксическая ошибка ввода */
+        cmd_error;      /* ошибка последовательности команд */
 
 transition =
 { tst = created, hello, mail_from, rcpt_to;            tev = cmd_helo;        next = hello;   ttype = helo;      },
@@ -24,31 +46,31 @@ transition =
 
 
 transition =
-{ tst = init;         tev = accepted;    next = created;   ttype = accepted; };
+{ tst = init;         tev = accepted;       next = created;     ttype = accepted;     };
 
 transition =
-{ tst = created;      tev = cmd_vrfy;    next = created;   ttype = vrfy;      },
-{ tst = created;      tev = cmd_error;   next = created;   ttype = cmd_error; },
-{ tst = created;      tev = syntax_error;   next = created;   ttype = syntax_error; };
+{ tst = created;      tev = cmd_vrfy;       next = created;     ttype = vrfy;         },
+{ tst = created;      tev = cmd_error;      next = created;     ttype = cmd_error;    },
+{ tst = created;      tev = syntax_error;   next = created;     ttype = syntax_error; };
 
 transition =
-{ tst = hello;        tev = cmd_mail;    next = mail_from; ttype = mail;      },
-{ tst = hello;        tev = cmd_vrfy;    next = hello;     ttype = vrfy;      },
-{ tst = hello;        tev = cmd_error;   next = hello;   ttype = cmd_error;   },
-{ tst = hello;        tev = syntax_error;   next = hello;     ttype = syntax_error; };
+{ tst = hello;        tev = cmd_mail;       next = mail_from;   ttype = mail;         },
+{ tst = hello;        tev = cmd_vrfy;       next = hello;       ttype = vrfy;         },
+{ tst = hello;        tev = cmd_error;      next = hello;       ttype = cmd_error;    },
+{ tst = hello;        tev = syntax_error;   next = hello;       ttype = syntax_error; };
 
 transition =
-{ tst = mail_from;    tev = cmd_rcpt;       next = rcpt_to;     ttype = rcpt;      },
-{ tst = mail_from;    tev = cmd_vrfy;       next = mail_from;   ttype = vrfy;      },
-{ tst = mail_from;    tev = cmd_error;      next = mail_from;   ttype = cmd_error; },
+{ tst = mail_from;    tev = cmd_rcpt;       next = rcpt_to;     ttype = rcpt;         },
+{ tst = mail_from;    tev = cmd_vrfy;       next = mail_from;   ttype = vrfy;         },
+{ tst = mail_from;    tev = cmd_error;      next = mail_from;   ttype = cmd_error;    },
 { tst = mail_from;    tev = syntax_error;   next = mail_from;   ttype = syntax_error; };
 
 transition =
-{ tst = rcpt_to;      tev = cmd_rcpt;       next = rcpt_to;     ttype = rcpt; },
-{ tst = rcpt_to;      tev = cmd_data;       next = data;        ttype = data; },
-{ tst = rcpt_to;      tev = cmd_vrfy;       next = rcpt_to;     ttype = vrfy; },
-{ tst = rcpt_to;      tev = cmd_error;      next = rcpt_to;     ttype = cmd_error; },
+{ tst = rcpt_to;      tev = cmd_rcpt;       next = rcpt_to;     ttype = rcpt;         },
+{ tst = rcpt_to;      tev = cmd_data;       next = data;        ttype = data;         },
+{ tst = rcpt_to;      tev = cmd_vrfy;       next = rcpt_to;     ttype = vrfy;         },
+{ tst = rcpt_to;      tev = cmd_error;      next = rcpt_to;     ttype = cmd_error;    },
 { tst = rcpt_to;      tev = syntax_error;   next = rcpt_to;     ttype = syntax_error; };
 
 transition =
-{ tst = data;         tev = mail_end;    next = hello;     ttype = mail_received; };
+{ tst = data;         tev = mail_end;       next = hello;       ttype = mail_received;};
