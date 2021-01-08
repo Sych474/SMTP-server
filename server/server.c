@@ -427,16 +427,14 @@ void process_parser_result(server_t *server, parser_result_t *result) {
         break;
 
     case SMTP_RCPT_CMD:
-        if ( is_in_state(server, SERVER_FSM_ST_MAIL_FROM) ||
-             is_in_state(server, SERVER_FSM_ST_RCPT_TO) ||
-             is_in_state(server, SERVER_FSM_ST_RCPT_TO_ADD))
+        if ( is_in_state(server, SERVER_FSM_ST_MAIL_FROM) || is_in_state(server, SERVER_FSM_ST_RCPT_TO))
             server_fsm_step(server->client_info->fsm_state, SERVER_FSM_EV_CMD_RCPT, server, result->data);
         else
             server_fsm_step(server->client_info->fsm_state, SERVER_FSM_EV_CMD_ERROR, server, NULL);
         break;
 
     case SMTP_DATA_CMD:
-        if (is_in_state(server, SERVER_FSM_ST_RCPT_TO_ADD))
+        if (is_in_state(server, SERVER_FSM_ST_RCPT_TO))
             server_fsm_step(server->client_info->fsm_state, SERVER_FSM_EV_CMD_DATA, server, NULL);
         else
             server_fsm_step(server->client_info->fsm_state, SERVER_FSM_EV_CMD_ERROR, server, NULL);
