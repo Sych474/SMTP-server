@@ -1,5 +1,13 @@
 #include "fsm_handlers.h"
 
+te_server_fsm_state set_output_buf_and_state(server_t* server, te_server_fsm_state next_state, char *message) {
+    if (server_set_output_buf(server, message, strlen(message)) < 0) {
+        log_error(server->logger, "[WORKER %d] error in server_set_output_buf.", getpid());
+        return client_info_set_state(server->client_info, SERVER_FSM_EV_INVALID);
+    }
+    return client_info_set_state(server->client_info, next_state);
+}
+
 te_server_fsm_state handle_helo_ehlo(server_t* server, string_t *data,
     te_server_fsm_state next_state, char* dns_confirmed_msg, char *dns_error_msg) {
     int dns_confirmed = 0;
@@ -18,30 +26,16 @@ te_server_fsm_state handle_helo_ehlo(server_t* server, string_t *data,
             server->client_info->addr->str,
             data->str);
     }
-    if (dns_confirmed) {
-        if (server_set_output_buf(server, dns_confirmed_msg, strlen(dns_confirmed_msg)) < 0) {
-            log_error(server->logger, "[WORKER %d] error in server_set_output_buf.", getpid());
-            return client_info_set_state(server->client_info, SERVER_FSM_EV_INVALID);
-        }
-    } else {
-        if (server_set_output_buf(server, dns_error_msg, strlen(dns_error_msg)) < 0) {
-            log_error(server->logger, "[WORKER %d] error in server_set_output_buf.", getpid());
-            return client_info_set_state(server->client_info, SERVER_FSM_EV_INVALID);
-        }
-    }
-
-    return client_info_set_state(server->client_info, next_state);
+    if (dns_confirmed)
+        return set_output_buf_and_state(server, next_state, dns_confirmed_msg);
+    else
+        return set_output_buf_and_state(server, next_state, dns_error_msg);
 }
 
 te_server_fsm_state fsm_handle_accepted(server_t* server, te_server_fsm_state next_state) {
     log_info(server->logger, "[WORKER %d] get 'accepted', next state: %d", getpid(), next_state);
 
-    if (server_set_output_buf(server, SMTP_MSG_ACCEPTED, strlen(SMTP_MSG_ACCEPTED)) < 0) {
-        log_error(server->logger, "[WORKER %d] error in server_set_output_buf.", getpid());
-        return client_info_set_state(server->client_info, SERVER_FSM_EV_INVALID);
-    }
-
-    return client_info_set_state(server->client_info, next_state);
+    return set_output_buf_and_state(server, next_state, SMTP_MSG_ACCEPTED);
 }
 
 te_server_fsm_state fsm_handle_helo(server_t* server, string_t *data, te_server_fsm_state next_state) {
@@ -78,11 +72,7 @@ te_server_fsm_state fsm_handle_mail(server_t* server, string_t *data, te_server_
         address_get_str(address),
         next_state);
 
-    if (server_set_output_buf(server, SMTP_MSG_MAIL, strlen(SMTP_MSG_MAIL)) < 0) {
-        log_error(server->logger, "[WORKER %d] error in server_set_output_buf.", getpid());
-        return client_info_set_state(server->client_info, SERVER_FSM_EV_INVALID);
-    }
-    return client_info_set_state(server->client_info, next_state);
+    return set_output_buf_and_state(server, next_state, SMTP_MSG_MAIL);
 }
 
 te_server_fsm_state fsm_handle_rcpt(server_t* server, string_t *data, te_server_fsm_state next_state) {
@@ -93,90 +83,66 @@ te_server_fsm_state fsm_handle_rcpt(server_t* server, string_t *data, te_server_
     }
 
     // TODO(sych) process rcpt max count and other errors
-    mail_add_rcpt(server->client_info->mail, address);
-    address_free(address);
-    log_info(server->logger,
-        "[WORKER %d] get RCPT cmd, address: %s; next state: %d",
-        getpid(),
-        address_get_str(address),
-        next_state);
+    if (server->client_info->mail->rcpts_cnt >= MAIL_MAX_RCPTS) {
+        log_info(server->logger, "[WORKER %d] get RCPT cmd, MAX RCPTS error!", getpid());
 
-    if (server_set_output_buf(server, SMTP_MSG_RCPT, strlen(SMTP_MSG_RCPT)) < 0) {
-        log_error(server->logger, "[WORKER %d] error in server_set_output_buf.", getpid());
-        return client_info_set_state(server->client_info, SERVER_FSM_EV_INVALID);
+        return set_output_buf_and_state(server, next_state, SMTP_MSG_RCPT_MAX_CNT);
+    } else {
+        int res = mail_add_rcpt(server->client_info->mail, address);
+        address_free(address);
+        if (res) {
+            log_error(server->logger, "[WORKER %d] error in adding rcpt to mail.", getpid());
+            return client_info_set_state(server->client_info, SERVER_FSM_EV_INVALID);
+        }
+        log_info(server->logger,
+            "[WORKER %d] get RCPT cmd, address: %s; next state: %d",
+            getpid(),
+            address_get_str(address),
+            next_state);
+
+        return set_output_buf_and_state(server, next_state, SMTP_MSG_RCPT);
     }
-
-    return client_info_set_state(server->client_info, next_state);
 }
 
 te_server_fsm_state fsm_handle_data(server_t* server, te_server_fsm_state next_state) {
     log_info(server->logger, "[WORKER %d] get DATA cmd, next state: %d", getpid(), next_state);
 
-    if (server_set_output_buf(server, SMTP_MSG_DATA, strlen(SMTP_MSG_DATA)) < 0) {
-        log_error(server->logger, "[WORKER %d] error in server_set_output_buf.", getpid());
-        return client_info_set_state(server->client_info, SERVER_FSM_EV_INVALID);
-    }
-    return client_info_set_state(server->client_info, next_state);
+    return set_output_buf_and_state(server, next_state, SMTP_MSG_DATA);
 }
 
 te_server_fsm_state fsm_handle_mail_end(server_t* server, te_server_fsm_state next_state) {
     log_info(server->logger, "[WORKER %d] END OF DATA, next state: %d", getpid(), next_state);
-
-    if (server_set_output_buf(server, SMTP_MSG_DATA_END, strlen(SMTP_MSG_DATA)) < 0) {
-        log_error(server->logger, "[WORKER %d] error in server_set_output_buf.", getpid());
-        return client_info_set_state(server->client_info, SERVER_FSM_EV_INVALID);
-    }
 
     if (maildir_save_mail(server->client_info->mail, SERVER_MAIL_DIR, server->logger) < 0) {
         log_error(server->logger, "[WORKER %d] error in maildir_save_mail.", getpid());
         return client_info_set_state(server->client_info, SERVER_FSM_EV_INVALID);
     }
 
-    return client_info_set_state(server->client_info, next_state);
+    return set_output_buf_and_state(server, next_state, SMTP_MSG_DATA_END);
 }
 
 te_server_fsm_state fsm_handle_quit(server_t* server, te_server_fsm_state next_state) {
     log_info(server->logger, "[WORKER %d] get QUIT cmd, next state: %d", getpid(), next_state);
 
-    if (server_set_output_buf(server, SMTP_MSG_QUIT, strlen(SMTP_MSG_QUIT)) < 0) {
-        log_error(server->logger, "[WORKER %d] error in server_set_output_buf.", getpid());
-        return client_info_set_state(server->client_info, SERVER_FSM_EV_INVALID);
-    }
-
-    return client_info_set_state(server->client_info, next_state);
+    return set_output_buf_and_state(server, next_state, SMTP_MSG_QUIT);
 }
 
 te_server_fsm_state fsm_handle_vrfy(server_t* server, te_server_fsm_state next_state) {
     log_info(server->logger, "[WORKER %d] get VRFY cmd, next state: %d", getpid(), next_state);
 
-    if (server_set_output_buf(server, SMTP_MSG_VRFY, strlen(SMTP_MSG_VRFY)) < 0) {
-        log_error(server->logger, "[WORKER %d] error in server_set_output_buf.", getpid());
-        return client_info_set_state(server->client_info, SERVER_FSM_EV_INVALID);
-    }
-
-    return client_info_set_state(server->client_info, next_state);
+    return set_output_buf_and_state(server, next_state, SMTP_MSG_VRFY);
 }
 
 te_server_fsm_state fsm_handle_rset(server_t* server, te_server_fsm_state next_state) {
     log_info(server->logger, "[WORKER %d] get RSET cmd, next state: %d", getpid(), next_state);
 
-    if (server_set_output_buf(server, SMTP_MSG_RSET, strlen(SMTP_MSG_RSET)) < 0) {
-        log_error(server->logger, "[WORKER %d] error in server_set_output_buf.", getpid());
-        return client_info_set_state(server->client_info, SERVER_FSM_EV_INVALID);
-    }
-
-    return client_info_set_state(server->client_info, next_state);
+    return set_output_buf_and_state(server, next_state, SMTP_MSG_RSET);
 }
 
 te_server_fsm_state fsm_handle_timeout(server_t* server, te_server_fsm_state next_state) {
     log_info(server->logger, "[WORKER %d] TIMEOUT, next state: %d", getpid(), next_state);
 
-    if (server_set_output_buf(server, SMTP_MSG_TIMEOUT, strlen(SMTP_MSG_TIMEOUT)) < 0) {
-        log_error(server->logger, "[WORKER %d] error in server_set_output_buf.", getpid());
-        return client_info_set_state(server->client_info, SERVER_FSM_EV_INVALID);
-    }
-
-    return client_info_set_state(server->client_info, next_state);
+    return set_output_buf_and_state(server, next_state, SMTP_MSG_TIMEOUT);
 }
 
 te_server_fsm_state fsm_handle_close(server_t* server, te_server_fsm_state next_state) {
@@ -194,32 +160,17 @@ te_server_fsm_state fsm_handle_lost(server_t* server, te_server_fsm_state next_s
 te_server_fsm_state fsm_handle_syntax_error(server_t* server, te_server_fsm_state next_state) {
     log_info(server->logger, "[WORKER %d] input_error, next state: %d", getpid(), next_state);
 
-    if (server_set_output_buf(server, SMTP_MSG_SYNTAX_ERROR, strlen(SMTP_MSG_SYNTAX_ERROR)) < 0) {
-        log_error(server->logger, "[WORKER %d] error in server_set_output_buf.", getpid());
-        return client_info_set_state(server->client_info, SERVER_FSM_EV_INVALID);
-    }
-
-    return client_info_set_state(server->client_info, next_state);
+    return set_output_buf_and_state(server, next_state, SMTP_MSG_SYNTAX_ERROR);
 }
 
 te_server_fsm_state fsm_handle_cmd_error(server_t* server, te_server_fsm_state next_state) {
     log_info(server->logger, "[WORKER %d] cmd_error, next state: %d", getpid(), next_state);
 
-    if (server_set_output_buf(server, SMTP_MSG_CMD_ERROR, strlen(SMTP_MSG_CMD_ERROR)) < 0) {
-        log_error(server->logger, "[WORKER %d] error in server_set_output_buf.", getpid());
-        return client_info_set_state(server->client_info, SERVER_FSM_EV_INVALID);
-    }
-
-    return client_info_set_state(server->client_info, next_state);
+    return set_output_buf_and_state(server, next_state, SMTP_MSG_CMD_ERROR);
 }
 
 te_server_fsm_state fsm_handle_invalid(server_t* server, te_server_fsm_state next_state) {
     log_info(server->logger, "[WORKER %d] invalid, next state: %d", getpid(), next_state);
 
-    if (server_set_output_buf(server, SMTP_MSG_INTERNAL_ERROR, strlen(SMTP_MSG_INTERNAL_ERROR)) < 0) {
-        log_error(server->logger, "[WORKER %d] error in server_set_output_buf.", getpid());
-        return client_info_set_state(server->client_info, SERVER_FSM_EV_INVALID);
-    }
-
-    return client_info_set_state(server->client_info, next_state);
+    return set_output_buf_and_state(server, next_state, SMTP_MSG_INTERNAL_ERROR);
 }

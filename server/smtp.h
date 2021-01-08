@@ -9,6 +9,7 @@
 #define SMTP_MSG_EHLO_NO_DNS    "250 OK (EHLO) WARNING: error on revers DNS check \r\n"
 #define SMTP_MSG_MAIL           "250 OK (MAIL)\r\n"
 #define SMTP_MSG_RCPT           "250 OK (RCPT)\r\n"
+#define SMTP_MSG_RCPT_MAX_CNT   "452 4.5.3 Too many recipients \r\n"
 #define SMTP_MSG_DATA           "354 Enter message, ending with \".\" on a line by itself\r\n"
 #define SMTP_MSG_DATA_END       "250 OK Mail accepted.\r\n"
 #define SMTP_MSG_RSET           "220 SMTP server is ready (RSET)\r\n"

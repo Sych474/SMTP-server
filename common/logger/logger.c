@@ -123,7 +123,7 @@ void log_message(logger_t *logger, char *prefix, const char *format, va_list vl)
     snprintf(new_format, MAX_MSG_SIZE, "%s %s", prefix, format);
     vsnprintf(msg.msg_payload, MAX_MSG_SIZE, new_format, vl);
     if (msgsnd(logger->mq, &msg, sizeof(msg.msg_payload), 0) < 0) {
-        // TODO(sych) error
+        printf("WARNING - logger msgsnd error\n");
     }
 }
 
