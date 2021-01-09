@@ -1,5 +1,5 @@
 #include "server_tests_suites_filler.h"
-#include "../common/tests/common_tests_suites_filler.h"
+#include "common_tests_suites_filler.h"
 
 #define C_UNIT_FILENAME_ROOT "CUnit"
 

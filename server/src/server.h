@@ -1,5 +1,5 @@
-#ifndef SERVER_SERVER_H_
-#define SERVER_SERVER_H_
+#ifndef SERVER_SRC_SERVER_H_
+#define SERVER_SRC_SERVER_H_
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -61,4 +61,4 @@ int server_set_output_buf(server_t *server, char* msg, size_t msg_size);
 
 void server_free(server_t *server);
 
-#endif  // SERVER_SERVER_H_
+#endif  // SERVER_SRC_SERVER_H_

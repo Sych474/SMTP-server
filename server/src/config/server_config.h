@@ -1,5 +1,5 @@
-#ifndef SERVER_CONFIG_SERVER_CONFIG_H_
-#define SERVER_CONFIG_SERVER_CONFIG_H_
+#ifndef SERVER_SRC_CONFIG_SERVER_CONFIG_H_
+#define SERVER_SRC_CONFIG_SERVER_CONFIG_H_
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -18,4 +18,4 @@ typedef struct server_config_struct {
 server_config_t *server_config_read(char *config_name);
 void server_config_free(server_config_t *config);
 
-#endif  // SERVER_CONFIG_SERVER_CONFIG_H_
+#endif  // SERVER_SRC_CONFIG_SERVER_CONFIG_H_

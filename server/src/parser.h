@@ -1,5 +1,5 @@
-#ifndef SERVER_PARSER_H_
-#define SERVER_PARSER_H_
+#ifndef SERVER_SRC_PARSER_H_
+#define SERVER_SRC_PARSER_H_
 
 #include <string.h>
 #include <stdlib.h>
@@ -53,4 +53,4 @@ char* parser_parse_end_of_mail(char* msg);
 
 void parser_result_free(parser_result_t *parser);
 
-#endif  // SERVER_PARSER_H_
+#endif  // SERVER_SRC_PARSER_H_
