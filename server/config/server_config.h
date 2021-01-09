@@ -4,7 +4,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <libconfig.h>
-#include "../../common/strings/strings.h"
+
+#include "strings.h"
 
 typedef struct server_config_struct {
     int port;

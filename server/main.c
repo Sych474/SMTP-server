@@ -4,7 +4,7 @@
 #include <sys/signalfd.h>
 
 #include "server.h"
-#include "config/server_config.h"
+#include "server_config.h"
 
 int create_signal_fd();
 void print_configuration(server_config_t *config);

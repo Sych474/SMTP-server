@@ -7,7 +7,7 @@
 #include <stdio.h>
 
 #include "smtp.h"
-#include "../common/strings/strings.h"
+#include "strings.h"
 
 #define PARSER_EOL "\n"
 #define PARSER_EOM "\n.\n"

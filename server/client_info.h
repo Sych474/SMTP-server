@@ -7,10 +7,10 @@
 #include <poll.h>
 #include <time.h>
 
-#include "../common/mail/maildir.h"
-#include "../common/logger/logger.h"
-#include "../common/strings/strings.h"
-#include "autogen/server-fsm.h"
+#include "maildir.h"
+#include "logger.h"
+#include "strings.h"
+#include "server-fsm.h"
 
 #define CLIENT_INFO_START_BUFFER_SIZE 1024
 

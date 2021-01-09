@@ -3,10 +3,10 @@
 
 #include "server.h"
 #include "smtp.h"
-#include "../common/strings/strings.h"
-#include "../common/mail/maildir.h"
-#include "../common/mail/mail.h"
-#include "autogen/server-fsm.h"
+#include "strings.h"
+#include "maildir.h"
+#include "mail.h"
+#include "server-fsm.h"
 
 te_server_fsm_state fsm_handle_accepted(server_t* server, te_server_fsm_state next_state);
 te_server_fsm_state fsm_handle_helo(server_t* server, string_t *data, te_server_fsm_state next_state);

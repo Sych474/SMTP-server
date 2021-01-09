@@ -16,11 +16,11 @@
 #include <arpa/inet.h>
 
 #include "parser.h"
-#include "../common/logger/logger.h"
-#include "../common/strings/strings.h"
-#include "../common/privileges/privileges_dropper.h"
-#include "config/server_config.h"
-#include "autogen/server-fsm.h"
+#include "logger.h"
+#include "strings.h"
+#include "privileges_dropper.h"
+#include "server_config.h"
+#include "server-fsm.h"
 #include "client_info.h"
 
 
