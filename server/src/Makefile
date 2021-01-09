@@ -7,28 +7,24 @@ STYLE_CHECKER_ARGS  := --linelength=120
 
 BUILD_DIR 			:= build
 TEST_BUILD_DIR  	:= test_build
+COMMON_DIR			:=  ../../common/
 
-COMMON_PATH			:=  ../../common/
 COMMON_SRC_DIRS		:=  logger strings mail address tests privileges
-COMMON_SRC_DIRS		:=  $(addprefix $(COMMON_PATH),$(COMMON_SRC_DIRS))
+COMMON_SRC_DIRS		:=  $(addprefix $(COMMON_DIR),$(COMMON_SRC_DIRS))
+TEST_DIRS     		:= $(addprefix ../, ./tests/unit $(addprefix $(COMMON_DIR), tests)) #нужны для исключения из обычной сборки
 
 SRC_DIRS  	 		:= . ./tests/unit ./config  ./autogen $(COMMON_SRC_DIRS)
 STYLE_DIRS			:= $(filter-out ./autogen, $(SRC_DIRS))
 STYLE_FILES 		:= $(wildcard $(addsuffix /*.c, $(STYLE_DIRS))) $(wildcard $(addsuffix /*.h, $(STYLE_DIRS)))
 
-SRC_DIRS     		:= $(addprefix ../,$(SRC_DIRS))
+SRC_DIRS     		:= $(addprefix ../,$(SRC_DIRS)) # потому что будем собирать в /build
 SRC_FILES 			:= $(wildcard $(addsuffix /*.c,$(SRC_DIRS)))
 OBJ_FILES 			:= $(notdir $(patsubst %.c,%.o, $(SRC_FILES)))
 
-# TEST_OBJ_FILES нужны для того, чтобы удалить их из целей server
-TEST_DIRS			:= ./tests/unit  ../../common/tests
-TEST_DIRS     		:= $(addprefix ../,$(TEST_DIRS))
-TEST_OBJ_FILES      := $(notdir $(patsubst %.c,%.o, $(wildcard $(addsuffix /*.c,$(TEST_DIRS)))))
-
-# MAIN_OBJ_FILE нужно удалить из целей tests, чтобы не было дважды определенного main
-TEST_OBJ_EXCEPTIONS := main.o common_tests_main.o
-SERVER_OBJ_FILES	:= $(filter-out $(TEST_OBJ_FILES), $(OBJ_FILES))
-TEST_OBJ_FILES 		:=  $(filter-out $(TEST_OBJ_EXCEPTIONS), $(OBJ_FILES))
+SERVER_OBJ_EXCEPTIONS := $(notdir $(patsubst %.c,%.o, $(wildcard $(addsuffix /*.c,$(TEST_DIRS)))))
+TEST_OBJ_EXCEPTIONS   := main.o
+SERVER_OBJ_FILES      := $(filter-out $(SERVER_OBJ_EXCEPTIONS), $(OBJ_FILES))
+TEST_OBJ_FILES 		  :=  $(filter-out $(TEST_OBJ_EXCEPTIONS), $(OBJ_FILES))
 
 .PHONY: all clean server test test-unit test-style
 
