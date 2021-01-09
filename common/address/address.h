@@ -3,8 +3,6 @@
 
 #include "../strings/strings.h"
 
-#define LOCAL_DOMAIN "local.com"
-
 typedef enum address_type_enum {
     ADDRESS_TYPE_LOCAL = 1,
     ADDRESS_TYPE_REMOTE = 2,

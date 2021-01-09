@@ -1,6 +1,6 @@
 CC 					:= gcc
 CFLAGS 				:= -std=c99 -g -g3 -O0 -Wall -Werror -pedantic -D_GNU_SOURCE
-CFLAGS_END			:= -lpcre -lm
+CFLAGS_END			:= -lpcre -lm -lconfig
 
 STYLE_CHECKER   	:= ../common/linter/cpplint.py
 STYLE_CHECKER_ARGS  := --linelength=120
@@ -9,7 +9,7 @@ BUILD_DIR 			:= build
 TEST_BUILD_DIR  	:= test_build
 COMMON_TESTS_DIR    := ../common
 
-SRC_DIRS  	 		:= . ../common/logger ../common/strings ../common/mail ../common/address ./autogen ../common/privileges ./tests/unit ../common/tests
+SRC_DIRS  	 		:= . ../common/logger ../common/strings ../common/mail ../common/address ./autogen ../common/privileges ./tests/unit ../common/tests ./config
 STYLE_DIRS			:= $(filter-out ./autogen, $(SRC_DIRS))
 STYLE_FILES 		:= $(wildcard $(addsuffix /*.c, $(STYLE_DIRS))) $(wildcard $(addsuffix /*.h, $(STYLE_DIRS)))
 

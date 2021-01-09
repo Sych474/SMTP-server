@@ -19,6 +19,7 @@
 #include "../common/logger/logger.h"
 #include "../common/strings/strings.h"
 #include "../common/privileges/privileges_dropper.h"
+#include "config/server_config.h"
 #include "autogen/server-fsm.h"
 #include "client_info.h"
 
@@ -37,8 +38,6 @@
 #define END_SIGNAL              "exit"
 #define SERVER_TIMEOUT          300
 
-#define SERVER_MAIL_DIR         "/home/netroot/test_mail"
-
 typedef enum server_ip_version_enum {
     SERVER_IPV4 = 0,
     SERVER_IPV6 = 1
@@ -51,12 +50,15 @@ typedef struct server_struct {
     struct pollfd fds[POLL_FDS_COUNT];
     client_info_t *client_info;
     int is_master;
+    server_config_t *config;
 } server_t;
 
-server_t *server_init(int port, int signal_fd, logger_t *logger, server_ip_version_t ip_version);
+server_t *server_init(int signal_fd, logger_t *logger, server_ip_version_t ip_version, server_config_t *config);
 
-int server_start(server_t *server, int port);
+int server_start(server_t *server);
 
 int server_set_output_buf(server_t *server, char* msg, size_t msg_size);
+
+void server_free(server_t *server);
 
 #endif  // SERVER_SERVER_H_

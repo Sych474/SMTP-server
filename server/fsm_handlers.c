@@ -59,7 +59,7 @@ te_server_fsm_state fsm_handle_mail(server_t* server, string_t *data, te_server_
         return client_info_set_state(server->client_info, SERVER_FSM_EV_INVALID);
     }
 
-    address_t *address = address_init(data, LOCAL_DOMAIN);
+    address_t *address = address_init(data, server->config->local_domain->str);
     if (!address) {
         log_error(server->logger, "[WORKER %d] error in allocating mail.", getpid());
         return client_info_set_state(server->client_info, SERVER_FSM_EV_INVALID);
@@ -76,7 +76,7 @@ te_server_fsm_state fsm_handle_mail(server_t* server, string_t *data, te_server_
 }
 
 te_server_fsm_state fsm_handle_rcpt(server_t* server, string_t *data, te_server_fsm_state next_state) {
-    address_t *address = address_init(data, LOCAL_DOMAIN);
+    address_t *address = address_init(data, server->config->local_domain->str);
     if (!address) {
         log_error(server->logger, "[WORKER %d] error in allocating mail.", getpid());
         return client_info_set_state(server->client_info, SERVER_FSM_EV_INVALID);
@@ -113,7 +113,7 @@ te_server_fsm_state fsm_handle_data(server_t* server, te_server_fsm_state next_s
 te_server_fsm_state fsm_handle_mail_end(server_t* server, te_server_fsm_state next_state) {
     log_info(server->logger, "[WORKER %d] END OF DATA, next state: %d", getpid(), next_state);
 
-    if (maildir_save_mail(server->client_info->mail, SERVER_MAIL_DIR, server->logger) < 0) {
+    if (maildir_save_mail(server->client_info->mail, server->config->maildir->str, server->logger) < 0) {
         log_error(server->logger, "[WORKER %d] error in maildir_save_mail.", getpid());
         return client_info_set_state(server->client_info, SERVER_FSM_EV_INVALID);
     }

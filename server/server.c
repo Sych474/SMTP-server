@@ -4,7 +4,6 @@ int bind_server_fd(int port);
 
 int master_process(server_t *server);
 int worker_process(server_t *server);
-void server_finalize(server_t *server);
 
 int accept_new_client(server_t *server, string_t **host);
 
@@ -24,14 +23,15 @@ void check_timeout(server_t *server);
 int check_state(server_t *server);
 int is_in_state(server_t *server, te_server_fsm_state state);
 
-server_t *server_init(int port, int signal_fd, logger_t *logger, server_ip_version_t ip_version) {
+server_t *server_init(int signal_fd, logger_t *logger,
+                        server_ip_version_t ip_version, server_config_t *config) {
     server_t* server = malloc(sizeof(server_t));
 
     if (server == NULL) {
         log_error(logger, "Can not allocate memory for server!");
         return NULL;
     }
-
+    server->config = config;
     server->ip_version = ip_version;
     server->parser = parser_init();
         if (server->parser == NULL) {
@@ -44,10 +44,10 @@ server_t *server_init(int port, int signal_fd, logger_t *logger, server_ip_versi
     server->is_master = 1;
     server->client_info = NULL;
 
-    int server_fd = bind_server_fd(port);
+    int server_fd = bind_server_fd(config->port);
     if (server_fd < 0) {
         free(server);
-        log_error(logger, "Can not create or bind socket for server with port: %d", port);
+        log_error(logger, "Can not create or bind socket for server with port: %d", config->port);
         return NULL;
     }
     if (drop_privileges(logger) < 0) {
@@ -62,14 +62,13 @@ server_t *server_init(int port, int signal_fd, logger_t *logger, server_ip_versi
     return server;
 }
 
-int server_start(server_t *server, int port) {
+int server_start(server_t *server) {
     if (listen(server->fds[POLL_FDS_SERVER].fd, SOMAXCONN) < 0) {
         log_error(server->logger, "Can not listen on server socket!");
         return -1;
     }
 
-    log_info(server->logger, "Server is listening on %d!", port);
-
+    log_info(server->logger, "Server is listening on %d!", server->config->port);
 
     int run = 1;
     while (run) {
@@ -109,7 +108,6 @@ int server_start(server_t *server, int port) {
             run = check_state(server);
         }
     }
-    server_finalize(server);
     return 0;
 }
 
@@ -179,7 +177,7 @@ int worker_process(server_t *server) {
     return 0;
 }
 
-void server_finalize(server_t *server) {
+void server_free(server_t *server) {
     if (server) {
         for (int i = 0; i < POLL_FDS_COUNT; i++)
             if (server->fds[i].fd != -1)
@@ -195,6 +193,8 @@ void server_finalize(server_t *server) {
                 continue;
         }
         log_info(server->logger, "[PROCESS %d] stopped.", getpid());
+        server_config_free(server->config);
+        free(server);
     }
 }
 
