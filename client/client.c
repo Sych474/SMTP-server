@@ -1,10 +1,10 @@
 #include "client.h"
-
+#include "../common/mail/mail.h"
 char *keystring = "exit";
 
 char *server_ip = "127.0.0.1";
 
-char *cmds_str[] = {"HELO sd@mail.ru","EHLO sd@mailss.ru","MAIL FROM: me@mail.ru","RCPT TO: you@mail.ru","DATA","hello \n this is a message \n \n.\n","RST","QUIT"};
+char *cmds_str[] = {"HELO example.com","EHLO example.com","MAIL FROM: test@example.com","RCPT TO: theisub@yandex.ru","DATA","From: test@mail.ru\n To: tebe@yandex.ru\n Subject:Тема\n\n hello \n this is a message \n.\n","RST","QUIT"};
 
 
 
@@ -31,7 +31,7 @@ void start_poll(client_t *client)
 {
     printf("\n  POLL=%d events = %d revents = %d fds_cnt = %d",poll(client->fd,client->fds_cnt,100),client->fd[0].events,client->fd[0].revents,client->fds_cnt);
 
-    if(poll(client->fd,client->fds_cnt,100) > 0)
+    if(poll(client->fd,client->fds_cnt,100000) > 0)
     {
         printf("\n IN POLL");
         for (size_t i = 0; i < client->fds_cnt; i++)
@@ -124,6 +124,9 @@ void send_command(client_t *client, int serverid)
 {       
         char buffer[BUFFER_SIZE];
         memset(buffer,0,sizeof(buffer));
+        //mail_t mailToSend = mail_init();
+        
+
 
         string_t *newMessage = string_create(cmds_str[5],strlen(cmds_str[5]));
 

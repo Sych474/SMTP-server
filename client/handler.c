@@ -101,7 +101,7 @@ te_client_state HANDLE_STATE_RECEIVE_DATA_RESPONSE_EVENT_SEND_MESSAGE_BODY(te_cl
 
             //string_concat(currentMessage,buffer,strlen(buffer));
             printf("\nur message '%s'\n",currentMessage->str);
-            if (strstr(currentMessage->str,"\n.\n"))
+            if (strstr(currentMessage->str,"\n."))
             {
                 if (write(client->fd[serverid].fd,currentMessage->str,currentMessage->str_size) <= 0)
                 {
@@ -257,7 +257,7 @@ te_client_state HANDLE_IDLE(te_client_state nxtSt){printf("\n new idle state - %
 
 te_client_state HANDLE_SEND_CMD(te_client_state nxtSt, client_t *client,int serverid,char *currentMessage,int len )
 {
-    printf("\nim here in handle_send '%s'",currentMessage);
+    printf("\nim here in handle_send '%s' + len %d",currentMessage,len);
         if (write(client->fd[serverid].fd,currentMessage,len) <= 0)
         {
             on_error("cannot write to server");
