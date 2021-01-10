@@ -56,3 +56,11 @@ test_build
 log.log
 CUnit-Listing.xml
 CUnit-Results.xml
+
+# tex
+*.log
+*.pdf
+*.out
+*.gz
+*.toc
+*.aux

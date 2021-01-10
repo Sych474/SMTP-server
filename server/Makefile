@@ -27,3 +27,6 @@ test-memory:
 
 report:
 	make --directory=$(REPORT_DIR)
+
+clean-report:
+	make clean --directory=$(REPORT_DIR)
