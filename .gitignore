@@ -64,3 +64,4 @@ CUnit-Results.xml
 *.gz
 *.toc
 *.aux
+*.dotg

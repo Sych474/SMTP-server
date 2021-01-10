@@ -38,10 +38,10 @@ event  =
 transition =
 { tst = created, hello, mail_from, rcpt_to;            tev = cmd_helo;        next = hello;   ttype = helo;      },
 { tst = created, hello, mail_from, rcpt_to;            tev = cmd_ehlo;        next = hello;   ttype = ehlo;      },
-{ tst = created, hello, mail_from, rcpt_to;            tev = cmd_rset;        next = hello;   ttype = rset;      },
+{ tst = created, hello, mail_from, rcpt_to;            tev = cmd_rset;        next = created; ttype = rset;      },
 { tst = created, hello, mail_from, rcpt_to;            tev = cmd_quit;        next = quit;    ttype = quit;      },
 { tst = created, hello, mail_from, rcpt_to, data;      tev = timeout;         next = timeout; ttype = timeout;   },
-{ tst = "*";                                           tev = con_lost;        next = done;    ttype = lost;      },
+{ tst = created, hello, mail_from, rcpt_to, data;      tev = con_lost;        next = done;    ttype = lost;      },
 { tst = timeout, quit;                                 tev = con_close;       next = done;    ttype = close;     };
 
 
