@@ -1,7 +1,7 @@
 compile_flags :=  -g -g3 -O0 
-source_dirs  := . ../common/strings
+source_dirs  := . ../common/strings ../common/mail ../common/logger ../common/address ../common/parser
 version := -std=c99
-cflags:= -Wall -Werror -pedantic -D_GNU_SOURCE  
+cflags:= -Wall -Werror -pedantic -D_GNU_SOURCE   
 
 build_dir := build
 source_dirs      := $(addprefix ../,$(source_dirs))
@@ -12,7 +12,7 @@ all:
 	make client --directory=$(build_dir) --makefile=../Makefile
 
 client: $(notdir $(patsubst %.c,%.o, $(wildcard $(search_wildcards))))
-	gcc  $(version) $^ -o $@  -lpcre
+	gcc  $(version) $^ -o $@  -lpcre -lm
 	
 VPATH := $(source_dirs) 
 

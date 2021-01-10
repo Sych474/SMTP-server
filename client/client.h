@@ -14,7 +14,9 @@
 #include <fcntl.h>
 #include <assert.h>
 #include "client-fsm.h"
-#include "parser.h"
+//#include "parser.h"
+//#include "../common/parser/parser.h"
+#include "../common/mail/mail.h"
 #include "../common/strings/strings.h"
 
 #define BUFFER_SIZE 1024
@@ -80,9 +82,9 @@ int init_client_option(char *server_ip,int port);
 client_t *add_server(client_t *client,char *ip, int port);
 int start_handler(client_t *client);
 void start_poll(client_t *client);
-void write_to_server(client_t *client);
+void write_to_server(client_t *client,mail_t *mail);
 void client_fill_pollout(client_t *client, int index, int fd);
 void client_stop(client_t *client);
 void send_data_body(client_t *client, string_t *newMessage, int serverid);
-void send_command(client_t *client, int serverid);
+void send_command(client_t *client, int serverid,mail_t *mail);
 void recv_command(client_t *client, int serverid,parser_result_t *result);

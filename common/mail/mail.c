@@ -1,5 +1,7 @@
 #include "mail.h"
 
+#define FROM "X-From:"
+#define TO "X-Original-To:"
 mail_t *mail_init() 
 {
     mail_t *mail = malloc(sizeof(mail_t));
@@ -83,51 +85,71 @@ void mail_dbg_print(mail_t *mail)
 mail_t *mail_read(char *filename)
 {
 
+
     FILE *fd = fopen(filename,"r");
     char * line = NULL;
     size_t len = 0;
     ssize_t read;
+    //char *frompos = NULL;
+    //char *topos = NULL;
+    string_t *tempstr = NULL;
     mail_t *mail = mail_init();
-
+    printf("\nstarted in func %s \n",filename);
     if (fd == NULL)
     {
         printf("simple error message");
         exit(1);
     }
+    printf("\n finished file reading \n" );
 
-    parser_t *pars_send = parser_init_send();
-    parser_result_t *result = NULL;
+    //parser_result_t *result = NULL;
     address_t *address = NULL;
-    string_t *data = NULL;
+    mail->data = string_create("",1);
+    //string_t *data =string_create("",1);
+
 
     
-
-    while ((read = getline(&line, &len, fd)) != -1) {
-        printf("Retrieved line of length %zu:\n", read);
-        printf("%s", line);
-        result = parser_parse_send(pars_send,line,strlen(line));
-        if (result->smtp_send_cmd == 2)
+    while ((read = getline(&line, &len, fd)) != -1) 
+    {
+        
+        if (strstr(line,FROM)!=NULL)
         {
-            address = address_init(result->data,"example.com");
+            tempstr = string_create(line+strlen(FROM),len-strlen(FROM));
+            string_trim(tempstr);
+            printf("\n from '%s' \n",tempstr->str);
+
+            address = address_init(tempstr,"example.com");
             mail->from = address;
         }
-        else if (result->smtp_send_cmd == 3)
+        else if (strstr(line,TO)!=NULL)
         {
-            address = address_init(result->data,"example.com");
+            tempstr = string_create(line+strlen(TO),len-strlen(TO));
+            string_trim(tempstr);
+            printf("\nnashel to '%s' \n",tempstr->str);
+
+            address = address_init(tempstr,"example.com");
             mail_add_rcpt(mail,address);
-            
         }
         else
         {
-            data=string_create(line,len);
-            mail->data = data;
+            printf("\n found data '%s'",line);
+            string_concat(mail->data,line,len);
         }
         
-        
-        
+
     }
-    
-    parser_finalize_send(pars_send);
+   
+
+    /*printf("\n Here is mailfrom: '%s' ",mail->from->str->str);
+    printf("\n Here is rcpt-to: '%s'",mail->rcpts[0]->str->str);
+    printf("\n Here is rcpt-to: '%d'",mail->rcpts_cnt);
+
+
+    printf("\n Here is data: '%s'",mail->data->str);
+    printf("\n im here");*/
+    string_free(tempstr);
+    address_free(address);
+    //parser_finalize_send(pars_send);
 
     fclose(fd);
 

@@ -1,5 +1,5 @@
 #include "handler.h"
-
+#include <time.h>
 te_client_state  HANDLE_INIT_EVENT_ERROR(te_client_state nxtSt)
 { printf("\n new state - %u", nxtSt); return nxtSt;
 
@@ -89,29 +89,32 @@ te_client_state HANDLE_STATE_RECEIVE_DATA_RESPONSE_EVENT_ERROR(te_client_state n
 
 te_client_state HANDLE_STATE_RECEIVE_DATA_RESPONSE_EVENT_SEND_MESSAGE_BODY(te_client_state nxtSt, client_t *client,int serverid,string_t *currentMessage,int len)
 { 
-
-    printf("current mess '%s'",currentMessage->str);
+    //printf("current mess '%s'",currentMessage->str);
     //char buffer[BUFFER_SIZE];
-    while(1)
+    size_t overall_len = len;
+    size_t buff_len = 30;
+    printf("len %d",len);
+    clock_t begin = clock();
+
+    for(int i=0; i<overall_len/buff_len; i++)
     {
-            /*memset(buffer,0,sizeof(buffer));
-            printf("your data message for server %i (to quit write 'exit' anywhere in the message):\n",serverid);
-            scanf(" %[^\n]", buffer);
-            printf("ur print '%s'",buffer);*/
-
-            //string_concat(currentMessage,buffer,strlen(buffer));
-            printf("\nur message '%s'\n",currentMessage->str);
-            if (strstr(currentMessage->str,"\n."))
-            {
-                if (write(client->fd[serverid].fd,currentMessage->str,currentMessage->str_size) <= 0)
-                {
+        //printf("\n Your sending message is  message '%s'\n",currentMessage->str);
+        if (write(client->fd[serverid].fd,currentMessage->str+(i*buff_len),buff_len) <= 0)
+        {
                     on_error("cannot write to server");
-                }
-                client->fd[serverid].events=POLLIN;
-                break;
-            }
+        }
     }
+    
 
+    if (write(client->fd[serverid].fd,"\n.\n",(size_t)strlen("\n.\n")) <= 0)
+    {
+                    on_error("cannot write to server");
+    }
+    clock_t end= clock();
+    double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
+    printf(" TIME:%f\n", time_spent);
+
+    client->fd[serverid].events=POLLIN;
 
 
 
