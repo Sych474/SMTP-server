@@ -120,6 +120,7 @@ mail_t *mail_read(char *filename)
 
             address = address_init(tempstr,"example.com");
             mail->from = address;
+            string_free(tempstr);
         }
         else if (strstr(line,TO)!=NULL)
         {
@@ -129,10 +130,13 @@ mail_t *mail_read(char *filename)
 
             address = address_init(tempstr,"example.com");
             mail_add_rcpt(mail,address);
+            string_free(tempstr);
+
+
         }
         else
         {
-            printf("\n found data '%s'",line);
+            //printf("\n found data '%s'",line);
             string_concat(mail->data,line,len);
         }
         
@@ -149,6 +153,7 @@ mail_t *mail_read(char *filename)
     printf("\n im here");*/
     string_free(tempstr);
     address_free(address);
+    free(line);
     //parser_finalize_send(pars_send);
 
     fclose(fd);

@@ -23,8 +23,10 @@ int start_handler(client_t *client)
         printf("\n another step: \n");
 
 
-
+        
         start_poll(client);
+        if (client->state[0] == CLIENT_ST_STATE_FREE_SOCKET)
+            break;
         write_to_server(client,mail);
         clock_t end= clock();
         double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
@@ -32,7 +34,7 @@ int start_handler(client_t *client)
 
     }
 
-    
+    mail_free(mail);
 
 
     return 0;
@@ -64,10 +66,14 @@ void start_poll(client_t *client)
                 printf("\nReceived '%s' from server %i\n", recv,client->fd[i].fd);
                 parser_t *pars_recv = parser_init_recv();
                 parser_result_t *result = parser_parse_recv(pars_recv,recv,strlen(recv));
+                parser_finalize_recv(pars_recv);
+                free(pars_recv);
+
                 printf("\ncurrent result of regex %d",result->smtp_recv_cmd);
                 client->parser_result[i] = *result;
                 recv_command(client,i,result);
-                parser_finalize_recv(pars_recv);
+                parser_result_free(result);
+                free(result);
                 client->fd[i].events = POLLOUT;
                     
                 
@@ -98,6 +104,7 @@ client_t* add_server(client_t*  client,char *ip, int port)
 
     if(connect(server_fd,(struct sockaddr *)&server,len) < 0)
     {
+        free(client);
         on_error("cannot cannot to server");
     }
 
@@ -187,10 +194,7 @@ void send_command(client_t *client, int serverid, mail_t *mail)
 
         //string_concat(buffer,"\n",strlen("\n"));
         //printf("ur print '%s'",buffer->str);
-        parser_t *pars_send = parser_init_send();
-        parser_result_t *result = parser_parse_send(pars_send,buffer->str,buffer->str_size);
-        parser_finalize_send(pars_send);
-
+        
 
         if(client->state[serverid] == CLIENT_ST_STATE_RECEIVE_DATA_RESPONSE)
         {
@@ -198,10 +202,25 @@ void send_command(client_t *client, int serverid, mail_t *mail)
         }
         else
         {
+            parser_t *pars_send = parser_init_send();
+            parser_result_t *result = parser_parse_send(pars_send,buffer->str,strlen(buffer->str));
+            parser_finalize_send(pars_send);
+            free(pars_send);
+            
             client->state[serverid]=client_step(client->state[serverid],smtp_cmds_to_send_event[result->smtp_send_cmd] ,serverid,client,buffer->str,strlen(buffer->str));
+
+            printf("\nHERE GOES PARSER  %d- ",result->smtp_send_cmd);
+            parser_result_free(result);
+            free(result);
+            printf("\n HERE ENDS PARSER\n");
+
         }
+
+        
         string_clear(buffer);
         string_free(buffer);
+       
+
 }
 
 void recv_command(client_t *client, int serverid,parser_result_t *result)
@@ -220,7 +239,7 @@ void client_fill_pollout(client_t *client, int index, int fd)
 {
     client->fd[index].fd = fd;
     client->fd[index].events = POLLOUT;
-    printf("you connected to server with num #%i port \n",client->fds_cnt);
+    //printf("you connected to server with num #%i port \n",client->fds_cnt);
 }
 
 void client_stop(client_t *client)

@@ -92,6 +92,8 @@ parser_result_t *parser_parse_send(parser_t *parser, char* msg, int msg_len)
         if (res > 0) {
             printf("\n There's a match with cmd #%d\n",i);
             result->smtp_send_cmd = i; // cmds and regexps in compiled_regexps indexes are equal 
+            result->data = NULL;
+
             
             if (res > 1) {
                 const char *text = NULL;
@@ -99,6 +101,8 @@ parser_result_t *parser_parse_send(parser_t *parser, char* msg, int msg_len)
                 pcre_get_substring(msg, ovector, res, 1, &(text));
                 int len = ovector[3] - ovector[2];
                 result->data = string_create( text,len); 
+                printf("\n There's a result->data with cmd #%d   '%s'\n",i,result->data->str);
+
                 if (!result->data) {
                     free(result);
                     return NULL;
@@ -153,7 +157,7 @@ parser_result_t *parser_parse_recv(parser_t *parser, char* msg, int msg_len)
 
 void parser_finalize_recv(parser_t *parser) 
 {
-    for (int i = 0; i < SMTP_CMD_CNT; i++) {
+    for (int i = 0; i < SMTP_CMDS_RECV; i++) {
         if (parser->compiled_recv_regexps[i].regexp != NULL)
             pcre_free(parser->compiled_recv_regexps[i].regexp);
 
@@ -174,6 +178,6 @@ void parser_finalize_send(parser_t *parser)
 
 void parser_result_free(parser_result_t *result)
 {
-    if(result)
+    if(result->data)
         string_free(result->data);
 }

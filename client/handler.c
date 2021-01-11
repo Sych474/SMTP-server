@@ -89,10 +89,24 @@ te_client_state HANDLE_STATE_RECEIVE_DATA_RESPONSE_EVENT_ERROR(te_client_state n
 
 te_client_state HANDLE_STATE_RECEIVE_DATA_RESPONSE_EVENT_SEND_MESSAGE_BODY(te_client_state nxtSt, client_t *client,int serverid,string_t *currentMessage,int len)
 { 
-    //printf("current mess '%s'",currentMessage->str);
-    //char buffer[BUFFER_SIZE];
+
+
+    /*if (write(client->fd[serverid].fd,"From:me@example.com\n",strlen("From:me@example.com\n")) <= 0)
+        {
+                    on_error("cannot write to server");
+        }
+    if (write(client->fd[serverid].fd,"To: you@yandex.ru\n",strlen("To: you@yandex.ru\n")) <= 0)
+        {
+                    on_error("cannot write to server");
+        }
+    if (write(client->fd[serverid].fd,"Content-Type: text/html\n",strlen("Content-Type: text/html\n")) <= 0)
+        {
+                    on_error("cannot write to server");
+        }*/
+
+
     size_t overall_len = len;
-    size_t buff_len = 30;
+    size_t buff_len = 15;
     printf("len %d",len);
     clock_t begin = clock();
 
@@ -223,11 +237,12 @@ te_client_state HANDLE_STATE_SEND_QUIT_EVENT_ERROR(te_client_state nxtSt){ print
 
 te_client_state HANDLE_STATE_SEND_QUIT_EVENT_GOT_QUIT_RESPONSE(te_client_state nxtSt,client_t *client,int serverid)
 { 
-    printf("closing server #%d\n",serverid);
-    if(close(client->fd[serverid].fd)!=0)
+    
+    printf(" not closing handler server #%d\n",serverid);
+   /* if(close(client->fd[serverid].fd)!=0)
     {
             on_error("error closing socket");
-    }
+    }*/
 
     printf("\n new state - %u", nxtSt); return nxtSt;
 
