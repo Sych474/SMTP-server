@@ -9,25 +9,23 @@
 #include "smtp.h"
 #include "strings.h"
 
-#define PARSER_EOL "\n"
-#define PARSER_EOM "\n.\n"
+#define PARSER_EOL "\r\n"
+#define PARSER_EOD "\r\n.\r\n"
 
 #define PARSER_EOL_SIZE (sizeof(PARSER_EOL) - 1)
-#define PARSER_EOM_SIZE (sizeof(PARSER_EOM) - 1)
+#define PARSER_EOD_SIZE (sizeof(PARSER_EOD) - 1)
 
-#define SPACES_REGEXP "\\s*"
 #define DOMAIN_REGEXP "(\\s+\\S+)?"
-#define ADDRESS_OR_EMPTY_REGEXP "(<\\S+@\\S+>|<>|\\S+@\\S+)"
-#define ADDRESS_REGEXP "(<\\S+@\\S+>|\\S+@\\S+)"
+#define ADDRESS_REGEXP "\\s*(<\\S+@\\S+>|\\S+@\\S+)\\s*"
 
-#define HELO_REGEXP "HELO" SPACES_REGEXP DOMAIN_REGEXP PARSER_EOL
-#define EHLO_REGEXP "EHLO" SPACES_REGEXP DOMAIN_REGEXP PARSER_EOL
-#define MAIL_REGEXP "MAIL FROM:" SPACES_REGEXP ADDRESS_OR_EMPTY_REGEXP PARSER_EOL
-#define RCPT_REGEXP "RCPT TO:" SPACES_REGEXP ADDRESS_REGEXP PARSER_EOL
-#define DATA_REGEXP "DATA" PARSER_EOL
-#define RSET_REGEXP "RSET" PARSER_EOL
-#define QUIT_REGEXP "QUIT" PARSER_EOL
-#define VRFY_REGEXP "VRFY" DOMAIN_REGEXP PARSER_EOL
+#define HELO_REGEXP "[Hh][Ee][Ll][Oo]" DOMAIN_REGEXP PARSER_EOL
+#define EHLO_REGEXP "[Ee][Hh][Ll][Oo]" DOMAIN_REGEXP PARSER_EOL
+#define MAIL_REGEXP "[Mm][Aa][Ii][Ll] [Ff][Rr][Oo][Mm]:" ADDRESS_REGEXP PARSER_EOL
+#define RCPT_REGEXP "[Rr][Cc][Pp][Tt] [Tt][Oo]:" ADDRESS_REGEXP PARSER_EOL
+#define DATA_REGEXP "[Dd][Aa][Tt][Aa]" PARSER_EOL
+#define RSET_REGEXP "[Rr][Ss][Ee][Tt]" PARSER_EOL
+#define VRFY_REGEXP "[Vv][Rr][Ff][Yy]" DOMAIN_REGEXP PARSER_EOL
+#define QUIT_REGEXP "[Qq][Uu][Ii][Tt]" PARSER_EOL
 
 #define OVECSIZE 10
 
@@ -49,7 +47,7 @@ parser_t *parser_init();
 void parser_free(parser_t * parser);
 parser_result_t *parser_parse(parser_t * parser, char* msg, int msg_len);
 char* parser_parse_end_of_line(char* msg);
-char* parser_parse_end_of_mail(char* msg);
+char* parser_parse_end_of_data(char* msg);
 
 void parser_result_free(parser_result_t *parser);
 

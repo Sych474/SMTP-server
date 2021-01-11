@@ -97,7 +97,7 @@ te_server_fsm_state fsm_handle_rcpt(server_t* server, string_t *data, te_server_
         log_info(server->logger,
             "[WORKER %d] get RCPT cmd, address: %s; next state: %d",
             getpid(),
-            address_get_str(address),
+            address_get_str(server->client_info->mail->rcpts[server->client_info->mail->rcpts_cnt]),
             next_state);
 
         return set_output_buf_and_state(server, next_state, SMTP_MSG_RCPT);

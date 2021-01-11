@@ -260,10 +260,10 @@ int recv_from_client(server_t *server) {
 }
 
 void recv_mail_from_client(server_t *server, char *buf) {
-    char *end = parser_parse_end_of_mail(server->client_info->input_buf->str);
+    char *end = parser_parse_end_of_data(server->client_info->input_buf->str);
 
     if (end) {
-        size_t end_size = PARSER_EOM_SIZE;
+        size_t end_size = PARSER_EOD_SIZE;
         end += end_size;
 
         size_t message_size = end - server->client_info->input_buf->str;
@@ -293,6 +293,7 @@ void recv_cmd_from_client(server_t *server, char *buf) {
         end += end_size;
         size_t message_size = end - server->client_info->input_buf->str;
 
+        log_debug(server->logger, "current input buffer: %s",  server->client_info->input_buf->str);
         parser_result_t * p_res = parser_parse(server->parser, server->client_info->input_buf->str, message_size);
         process_parser_result(server, p_res);
         parser_result_free(p_res);

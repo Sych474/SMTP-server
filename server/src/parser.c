@@ -98,6 +98,6 @@ char* parser_parse_end_of_line(char* msg) {
     return strstr(msg, PARSER_EOL);
 }
 
-char* parser_parse_end_of_mail(char* msg) {
-    return strstr(msg, PARSER_EOM);
+char* parser_parse_end_of_data(char* msg) {
+    return strstr(msg, PARSER_EOD);
 }
