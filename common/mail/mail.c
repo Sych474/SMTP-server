@@ -1,43 +1,38 @@
 #include "mail.h"
 
-#define FROM "X-From:"
-#define TO "X-Original-To:"
-mail_t *mail_init() 
-{
+mail_t *mail_init() {
     mail_t *mail = malloc(sizeof(mail_t));
     if (!mail)
-        return NULL; 
+        return NULL;
 
     mail->data = NULL;
-    mail->from = NULL; 
+    mail->from = NULL;
     mail->rcpts_cnt = 0;
 
     for (size_t i = 0; i < MAIL_MAX_RCPTS; i++)
-        mail->rcpts[i] = NULL; 
+        mail->rcpts[i] = NULL;
 
     return mail;
 }
 
-void mail_free(mail_t *mail)
-{
+void mail_free(mail_t *mail) {
     if (mail) {
         string_free(mail->data);
         mail->data = NULL;
         address_free(mail->from);
-        mail->from = NULL; 
+        mail->from = NULL;
         for (size_t i = 0; i < mail->rcpts_cnt; i++) {
             address_free(mail->rcpts[i]);
-            mail->rcpts[i] = NULL; 
+            mail->rcpts[i] = NULL;
         }
         free(mail);
     }
 }
 
-int mail_add_rcpt(mail_t *mail, address_t *rcpt)
-{
+int mail_add_rcpt(mail_t *mail, address_t *rcpt) {
     if (mail->rcpts_cnt >= MAIL_MAX_RCPTS)
-        return -1; 
-    
+        return -1;
+
     mail->rcpts[mail->rcpts_cnt] = address_copy(rcpt);
     if (!mail->rcpts[mail->rcpts_cnt])
         return -2;
@@ -45,14 +40,13 @@ int mail_add_rcpt(mail_t *mail, address_t *rcpt)
     return 0;
 }
 
-int mail_write(char *filename, mail_t *mail, logger_t *logger)
-{
+int mail_write(char *filename, mail_t *mail, logger_t *logger) {
     log_debug(logger, "[WORKER %d] mail_write start", getpid());
 
     FILE *fd = fopen(filename, "w");
     if (fd == NULL) {
         log_error(logger, "Error on opening file %s", filename);
-        return -1; 
+        return -1;
     }
     log_debug(logger, "[WORKER %d] file opened", getpid());
 
