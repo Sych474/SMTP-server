@@ -88,7 +88,7 @@ void parser_free(parser_t *parser) {
 }
 
 void parser_result_free(parser_result_t *result) {
-    if (result) {
+    if (result && result->data) {
         string_free(result->data);
         free(result);
     }
