@@ -37,7 +37,7 @@ all:
 test-unit:
 	mkdir -p $(TEST_BUILD_DIR)
 	make test --directory=$(TEST_BUILD_DIR) --makefile=../Makefile
-	./test_build/test
+	./test_build/test > test.out
 
 test-style:
 	$(STYLE_CHECKER) $(STYLE_CHECKER_ARGS) $(STYLE_FILES)

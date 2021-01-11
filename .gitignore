@@ -53,7 +53,6 @@ dkms.conf
 
 build
 test_build
-log.log
 CUnit-Listing.xml
 CUnit-Results.xml
 
