@@ -42,6 +42,11 @@ test-unit:
 test-style:
 	$(STYLE_CHECKER) $(STYLE_CHECKER_ARGS) $(STYLE_FILES)
 
+test-memory:
+	mkdir -p $(TEST_BUILD_DIR)
+	make test --directory=$(TEST_BUILD_DIR) --makefile=../Makefile
+	valgrind --log-file="memory.out" ./test_build/test
+
 server: $(SERVER_OBJ_FILES)
 	$(CC) $(CFLAGS) $^ -o $@ $(CFLAGS_END)
 
