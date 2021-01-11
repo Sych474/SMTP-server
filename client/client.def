@@ -1,0 +1,52 @@
+autogen definitions fsm;
+
+method = case;
+type = reentrant;
+cookie = "int server";
+cookie = "void* client";
+cookie = "void* data";
+cookie = "int len";
+
+
+state =	state_create_socket,state_connected,state_receive_smtp_greeting,state_send_ehlo,state_receive_ehlo_response,
+	state_receive_ehlo_multiline_response,state_fallback_to_helo,	state_send_helo,  	state_receive_helo_response,
+    state_send_mail_from,state_receive_mail_from_response,state_send_rcpt_to,state_receive_rcpt_to_response,state_send_data,
+	state_receive_data_response,state_send_message_body,state_receive_message_body_response,state_ready_to_send_next_message,
+	state_finish_sending_mail,	state_send_quit,	state_receive_quit_response,	state_reset,	state_free_socket,
+	state_error;
+	
+event = event_connected,	event_send_ehlo,	event_got_ok,	event_got_ehlo_response_multiline,    	event_got_ehlo_not_supported,
+	event_send_helo,	event_send_mail_from,	event_send_rcpt_to,	event_send_data,	event_got_data_response,
+	event_send_message_body,	event_ready_to_send_next_message,	event_all_mail_sent,	event_send_next_message,
+	event_send_quit,	event_got_quit_response,	event_send_reset,	event_error,	event_receive_smtp_greeting, event_stay_idle;
+
+transition = { tst = state_create_socket; tev = event_connected; next = state_connected; },
+{ tst = state_connected; tev = event_receive_smtp_greeting; next = state_receive_smtp_greeting; },
+{ tst = state_receive_smtp_greeting; tev = event_send_ehlo; next = state_send_ehlo; ttype=send_cmd;},
+{ tst = state_receive_smtp_greeting; tev = event_send_helo; next = state_send_helo; ttype=send_cmd;},
+{ tst = state_send_ehlo; tev = event_got_ehlo_response_multiline; next = state_send_ehlo; },
+{ tst = state_send_ehlo; tev = event_got_ok; next = state_receive_ehlo_response; },
+{ tst = state_send_ehlo; tev = event_got_ehlo_not_supported; next = state_fallback_to_helo; },
+{ tst = state_fallback_to_helo; tev = event_send_helo; next = state_send_helo; ttype=send_cmd;},
+{ tst = state_send_helo; tev = event_got_ok; next = state_receive_ehlo_response; },
+{ tst = state_receive_ehlo_response; tev = event_send_mail_from; next = state_send_mail_from; ttype=send_cmd; },
+{ tst = state_send_mail_from; tev = event_got_ok; next = state_receive_mail_from_response; },
+{ tst = state_receive_mail_from_response; tev = event_send_rcpt_to; next = state_send_rcpt_to; ttype=send_cmd;},
+{ tst = state_send_rcpt_to; tev = event_got_ok; next = state_receive_rcpt_to_response; },
+{ tst = state_receive_rcpt_to_response; tev = event_send_data; next = state_send_data; ttype=send_cmd;},
+{ tst = state_send_data; tev = event_got_data_response; next = state_receive_data_response; },
+{ tst = state_receive_data_response; tev = event_send_message_body; next = state_send_message_body; },
+{ tst = state_send_message_body; tev = event_got_ok; next = state_receive_message_body_response; },
+{ tst = state_receive_message_body_response; tev = event_ready_to_send_next_message; next = state_ready_to_send_next_message; },
+{ tst = state_ready_to_send_next_message; tev = event_send_next_message; next = state_receive_ehlo_response; },
+{ tst = state_send_message_body; tev = event_all_mail_sent; next = state_finish_sending_mail; },
+{ tst = state_finish_sending_mail; tev = event_send_quit; next = state_send_quit; ttype=send_cmd;},
+{ tst = state_send_quit; tev = event_got_quit_response; next = state_free_socket; },
+{ tst = "*"; tev = event_send_reset; next = state_connected; },
+{ tst = "*"; tev = event_error; next = state_error; },
+
+{ tst = state_send_ehlo; tev= event_stay_idle; next = state_receive_smtp_greeting; ttype = idle;},
+{ tst = state_send_helo; tev= event_stay_idle; next = state_fallback_to_helo; ttype = idle;},
+{ tst = state_send_mail_from; tev= event_stay_idle; next = state_receive_ehlo_response; ttype = idle;},
+{ tst = state_send_rcpt_to; tev= event_stay_idle; next = state_receive_mail_from_response; ttype = idle;},
+{ tst = state_send_data; tev= event_stay_idle; next = state_receive_rcpt_to_response; ttype = idle;};

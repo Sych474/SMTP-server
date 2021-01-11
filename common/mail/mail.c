@@ -74,3 +74,79 @@ void mail_dbg_print(mail_t *mail) {
     else
         printf("data: NULL\n");
 }
+
+mail_t *mail_read(char *filename) {
+    FILE *fd = fopen(filename, "r");
+    char * line = NULL;
+    size_t len = 0;
+    ssize_t read;
+    // char *frompos = NULL;
+    // char *topos = NULL;
+    string_t *tempstr = NULL;
+    mail_t *mail = mail_init();
+    printf("\nstarted in func %s \n", filename);
+    if (fd == NULL) {
+        printf("simple error message");
+        exit(1);
+    }
+    printf("\n finished file reading \n");
+
+    // parser_result_t *result = NULL;
+    address_t *address = NULL;
+    mail->data = string_create("", 1);
+    // string_t *data =string_create("",1);
+
+    while ((read = getline(&line, &len, fd)) != -1) {
+        if (strstr(line, MAIL_FROM_HEADER) != NULL) {
+            tempstr = string_create(line+strlen(MAIL_FROM_HEADER), len-strlen(MAIL_FROM_HEADER));
+            string_trim(tempstr);
+            printf("\n from '%s' \n", tempstr->str);
+
+            address = address_init(tempstr, "example.com");
+            mail->from = address;
+            string_free(tempstr);
+        } else if (strstr(line, MAIL_TO_HEADER) != NULL) {
+            tempstr = string_create(line + strlen(MAIL_TO_HEADER), len-strlen(MAIL_TO_HEADER));
+            string_trim(tempstr);
+            printf("\nnashel to '%s' \n", tempstr->str);
+
+            address = address_init(tempstr, "example.com");
+            mail_add_rcpt(mail, address);
+            string_free(tempstr);
+
+
+        } else {
+            // printf("\n found data '%s'",line);
+            string_concat(mail->data, line, len);
+        }
+    }
+
+
+    /*
+    printf("\n Here is mailfrom: '%s' ",mail->from->str->str);
+    printf("\n Here is rcpt-to: '%s'",mail->rcpts[0]->str->str);
+    printf("\n Here is rcpt-to: '%d'",mail->rcpts_cnt);
+
+
+    printf("\n Here is data: '%s'",mail->data->str);
+    printf("\n im here");*/
+    string_free(tempstr);
+    address_free(address);
+    free(line);
+    // parser_finalize_send(pars_send);
+
+    fclose(fd);
+
+    return mail;
+}
+
+/*
+int main (int argc, char *argv[])
+{
+    char *filename = "test.txt";
+
+    mail_read(filename);
+
+
+
+}*/

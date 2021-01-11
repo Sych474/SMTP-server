@@ -1,0 +1,6 @@
+X-From: random@example.com
+X-Original-To: theisub@yandex.ru
+
+random text
+another one
+hello

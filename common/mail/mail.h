@@ -7,6 +7,7 @@
 #include "../strings/strings.h"
 #include "../logger/logger.h"
 #include "../address/address.h"
+#include "parser.h"
 
 #define MAIL_MAX_RCPTS 128
 
@@ -22,7 +23,7 @@ typedef struct mail_struct {
 
 mail_t *mail_init();
 void mail_free(mail_t *mail);
-mail_t *mail_read(char *filename);  // not implemented
+mail_t *mail_read(char *filename);
 
 int mail_write(char *filename, mail_t *mail, logger_t *logger);
 int mail_add_rcpt(mail_t *mail, address_t *rcpt);
