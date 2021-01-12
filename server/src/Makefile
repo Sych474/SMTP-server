@@ -47,6 +47,9 @@ test-memory:
 	make test --directory=$(TEST_BUILD_DIR) --makefile=../Makefile
 	valgrind --log-file="memory.out" ./test_build/test
 
+test-system:
+	python3 ./tests/system/test.py ./tests/system/test_files
+
 server: $(SERVER_OBJ_FILES)
 	$(CC) $(CFLAGS) $^ -o $@ $(CFLAGS_END)
 
