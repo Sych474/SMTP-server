@@ -122,7 +122,7 @@ void serv_process(server_t *server) {
                     run = 0;
                     break;
                 }
-                if (check_accept(server))
+                if (check_accept(server) > 0)
                     break;
                 if (check_client_fds(server))
                     break;
@@ -174,8 +174,7 @@ int check_accept(server_t *server) {
         int client_id = get_empty_client_id(server);
         int client_fd_number = POLL_FDS_CLIENTS_START + client_id;
         if (client_id == -1) {
-            log_error(server->logger, "No empty client fds on accepting new client...");
-            // TODO(sych) add more error processing
+            log_warning(server->logger, "No empty client fds on accepting new client...");
             return 1;
         }
 
@@ -183,8 +182,8 @@ int check_accept(server_t *server) {
         log_debug(server->logger, "client_id: %d", client_id);
         int client_fd = accept_new_client(server, &addr);
         if (client_fd <= 0) {
-            log_error(server->logger, "Can not accept new client!");
-            return 0;
+            log_warning(server->logger, "Can not accept new client!");
+            return 1;
         }
 
         log_debug(server->logger, "client_fd: %d", client_fd);
@@ -192,14 +191,14 @@ int check_accept(server_t *server) {
         if (!server->client_infos[client_id]) {
             log_error(server->logger, "Error on memory allocation");
             string_free(addr);
-            return 0;
+            return -1;
         }
 
         log_info(server->logger, "New client accepted client_id: %d.", client_id);
         set_fd(server->fds, client_fd_number, client_fd);
         // after step fd will be setted to POLLOUT with hello message
         server_fsm_step(server->client_infos[client_id]->fsm_state, SERVER_FSM_EV_ACCEPTED, server, client_id, NULL);
-        return 1;
+        return 2;
     }
     return 0;
 }
@@ -401,6 +400,7 @@ int bind_server_fd(int port) {
     int res;
 
     server_fd = socket(AF_INET, SOCK_STREAM, 0);
+    fcntl(server_fd, F_SETFL, O_NONBLOCK);
     if (server_fd < 0)
         return server_fd;
 

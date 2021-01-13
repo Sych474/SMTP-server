@@ -11,7 +11,8 @@
 #include <sys/socket.h>
 #include <sys/signalfd.h>
 #include <netdb.h>
-
+#include <unistd.h>
+#include <fcntl.h>
 
 #include <arpa/inet.h>
 
@@ -25,7 +26,7 @@
 #include "process_info.h"
 
 #define BUFFER_SIZE             1024
-#define SERVER_CLIENTS_MAX_CNT  100
+#define SERVER_CLIENTS_MAX_CNT  128
 
 #define POLL_FDS_COUNT          (SERVER_CLIENTS_MAX_CNT + 2)
 #define POLL_FDS_SERVER         0

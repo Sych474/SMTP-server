@@ -52,13 +52,15 @@ int main(int argc, char *argv[]) {
 
         server_start(server, &process_info);
 
-        log_info(logger, "Server stopped.");
+        log_info(logger, "Server stopped, process_type: %d", process_info->type);
 
         server_free(server);
         // because after server_start we can have worker processes
         if (process_info->type == PROCESS_TYPE_MASTER) {
             // wait childs
             pid_t logger_pid;
+
+            log_debug(logger, "Will wait: %d", process_info->childs_count);
             for (size_t i = 0; i < process_info->childs_max_count; i++) {
                 if (process_info->childs[i] != NULL) {
                     int status = 0;
