@@ -13,6 +13,8 @@
 #include <sys/wait.h>
 #include <stdarg.h>
 
+#include "process_info.h"
+
 #define INFO_PREFIX "[INFO]"
 #define ERROR_PREFIX "[ERROR]"
 #define DEBUG_PREFIX "[DEBUG]"
@@ -39,9 +41,9 @@ typedef struct logger_mq_msg_struct {
     char msg_payload[MAX_MSG_SIZE];
 } logger_mq_msg_t;
 
-logger_t *logger_init(const char *log_filename);
-int logger_start(logger_t *logger);
+logger_t *logger_start(const char *log_filename, process_info_t* process_info);
 void logger_stop(logger_t *logger);
+void logger_free(logger_t *logger, process_type_t process_type);
 
 void log_error(logger_t *logger, const char *format, ...);
 void log_warning(logger_t *logger, const char *format, ...);

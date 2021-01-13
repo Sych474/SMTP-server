@@ -9,7 +9,7 @@ BUILD_DIR 			:= build
 TEST_BUILD_DIR  	:= test_build
 COMMON_DIR			:=  ../../common/
 
-COMMON_SRC_DIRS		:=  logger strings mail address tests privileges
+COMMON_SRC_DIRS		:=  logger strings mail address tests privileges process_info
 COMMON_SRC_DIRS		:=  $(addprefix $(COMMON_DIR),$(COMMON_SRC_DIRS))
 TEST_DIRS     		:= $(addprefix ../, ./tests/unit $(addprefix $(COMMON_DIR), tests)) #нужны для исключения из обычной сборки
 

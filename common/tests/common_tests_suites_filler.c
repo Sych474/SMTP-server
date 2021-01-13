@@ -1,7 +1,6 @@
 #include "common_tests_suites_filler.h"
 
 int fill_common_test_suites() {
-
     int result;
 
     CU_pSuite address_suite = CU_add_suite("Address unit tests", address_test_init, address_test_free);

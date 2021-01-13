@@ -2,25 +2,25 @@
 
 int bind_server_fd(int port);
 
-int master_process(server_t *server);
-int worker_process(server_t *server);
+void serv_process(server_t *server);
 
 int accept_new_client(server_t *server, string_t **host);
 
-void set_empty_fd(struct pollfd* fds, int index);
-void set_pollin_fd(struct pollfd* fds, int index, int fd);
+void set_fd(struct pollfd* fds, int index, int fd);
+void set_fd_empty(struct pollfd* fds, int index);
+void switch_fd(struct pollfd* fds, int index, short events);
 
 // recv
-int recv_from_client(server_t *server);
-void recv_mail_from_client(server_t *server, char *buf);
-void recv_cmd_from_client(server_t *server, char *buf);
+int recv_from_client(server_t *server, int client_id);
+void recv_mail_from_client(server_t *server, int client_id, char *buf);
+void recv_cmd_from_client(server_t *server, int client_id, char *buf);
 void process_parser_result(server_t *server, parser_result_t *result);
 
-// send
-int send_to_client(server_t *server);
+int is_empty_client(server_t *server, int client_id);
 
-void check_timeout(server_t *server);
-int check_state(server_t *server);
+// send
+int send_to_client(server_t *server, int client_id);
+
 int is_in_state(server_t *server, te_server_fsm_state state);
 
 server_t *server_init(int signal_fd, logger_t *logger,
@@ -41,7 +41,6 @@ server_t *server_init(int signal_fd, logger_t *logger,
     }
 
     server->logger = logger;
-    server->is_master = 1;
     server->client_info = NULL;
 
     int server_fd = bind_server_fd(config->port);
@@ -54,15 +53,16 @@ server_t *server_init(int signal_fd, logger_t *logger,
         free(server);
         return NULL;
     }
-
-    set_pollin_fd(server->fds, POLL_FDS_SIGNAL, signal_fd);
-    set_pollin_fd(server->fds, POLL_FDS_SERVER, server_fd);
-    set_empty_fd(server->fds, POLL_FDS_CLIENT);
+    set_fd(server->fds, POLL_FDS_SIGNAL, signal_fd);
+    set_fd(server->fds, POLL_FDS_SERVER, server_fd);
+    set_fd_empty(server->fds, POLL_FDS_CLIENT);
+    switch_fd(server->fds, POLL_FDS_SIGNAL, POLLIN);
+    switch_fd(server->fds, POLL_FDS_SERVER, POLLIN);
 
     return server;
 }
 
-int server_start(server_t *server) {
+int server_start(server_t *server, process_info_t *process_info) {
     if (listen(server->fds[POLL_FDS_SERVER].fd, SOMAXCONN) < 0) {
         log_error(server->logger, "Can not listen on server socket!");
         return -1;
@@ -70,6 +70,31 @@ int server_start(server_t *server) {
 
     log_info(server->logger, "Server is listening on %d!", server->config->port);
 
+    for (size_t i = 0; i < server->config->max_process_cnt - 1; i++) {
+        int pid = fork();
+        if (!pid) {
+            // worker
+            process_info->process_type = PROCESS_TYPE_WORKER;
+            break;
+        } else {
+            // master
+            process_info->process_type = PROCESS_TYPE_MASTER;
+            log_debug(server->logger, "fork worker...");
+        }
+    }
+    serv_process(server);
+    return 0;
+}
+
+int check_exit(server_t *server);
+int check_accept(server_t *server);
+int check_client_fds(server_t *server);
+void check_errors(server_t *server);
+void check_timeouts(server_t *server);
+void check_client_exits(server_t *server);
+
+void serv_process(server_t *server) {
+    log_debug(server->logger, "listening...");
     int run = 1;
     while (run) {
         int res = poll(server->fds, POLL_FDS_COUNT, POLL_TIMEOUT);
@@ -78,106 +103,118 @@ int server_start(server_t *server) {
                 break;
 
             case POLL_ERROR:
-                log_error(server->logger, "[WORKER] Error on poll");
+                log_error(server->logger, "Error on poll");
                 run = 0;
                 break;
 
             default:
-                if (server->fds[POLL_FDS_SIGNAL].revents & POLLIN) {
-                    server->fds[POLL_FDS_SIGNAL].revents = 0;
-                    // Process exit signal
-
-                    struct signalfd_siginfo sig_fd;
-                    ssize_t s;
-                    s = read(server->fds[POLL_FDS_SIGNAL].fd, &sig_fd, sizeof(sig_fd));
-                    if (s == sizeof(sig_fd) && sig_fd.ssi_signo == SIGINT) {
-                        log_info(server->logger, "[PROCESS %d] Stopping server...", getpid());
-                        run = 0;
-                    }
+                if (check_exit(server)) {
+                    run = 0;
                     break;
                 }
+                if (check_accept(server))
+                    break;
+                if (check_client_fds(server))
+                    break;
 
-                if (server->is_master)
-                    run = master_process(server);
-                else
-                    run = worker_process(server);
+                log_error(server->logger, "Unexpected poll");
+                run = 0;
+                // TODO(sych) process unexpected exits with messages for client!
                 break;
         }
-        if (run && !server->is_master) {
-            check_timeout(server);
-            run = check_state(server);
-        }
+        if (run)
+            check_timeouts(server);
+
+        check_errors(server);
+        check_client_exits(server);
     }
-    return 0;
+    log_info(server->logger, "Exiting...");
 }
 
-int master_process(server_t *server) {
+int check_exit(server_t *server) {
+    int result = 0;
+    if (server->fds[POLL_FDS_SIGNAL].revents & POLLIN) {
+        server->fds[POLL_FDS_SIGNAL].revents = 0;
+        // Process exit signal
+
+        struct signalfd_siginfo sig_fd;
+        ssize_t s;
+        s = read(server->fds[POLL_FDS_SIGNAL].fd, &sig_fd, sizeof(sig_fd));
+        if (s == sizeof(sig_fd) && sig_fd.ssi_signo == SIGINT) {
+            log_info(server->logger, "Stopping server...");
+            result = 1;
+        }
+    }
+    return result;
+}
+
+int get_empty_client_id(server_t *server) {
+    // STUB
+    // TODO(sych) implement
+    if (is_empty_client(server, 0))
+        return 0;
+    else
+        return -1;
+}
+
+int check_accept(server_t *server) {
     if (server->fds[POLL_FDS_SERVER].revents & POLLIN) {
         server->fds[POLL_FDS_SERVER].revents = 0;
+        log_debug(server->logger, "Accepting new client...");
+
+        int client_id = get_empty_client_id(server);
+        int client_fd_number = POLL_FDS_CLIENTS_START + client_id;
+        if (client_id == -1) {
+            log_error(server->logger, "No empty client fds on accepting new client...");
+            // TODO(sych) add more error processing
+            return 1;
+        }
 
         string_t *addr;
 
-        if (accept_new_client(server, &addr) != 0) {
-            log_error(server->logger, "[MASTER] Can not accept new client!");
+        int client_fd = accept_new_client(server, &addr);
+        if (client_fd <= 0) {
+            log_error(server->logger, "Can not accept new client!");
             return 0;
         }
-        int pid = fork();
-        if (!pid) {
-            // worker
-            server->is_master = 0;
-            set_empty_fd(server->fds, POLL_FDS_SERVER);
 
-            server->client_info = client_info_init(addr);
-            if (!server->client_info) {
-                log_error(server->logger, "[WORKER %d] Error on memory allocation", getpid());
-                return 0;
-            }
-            server_fsm_step(server->client_info->fsm_state, SERVER_FSM_EV_ACCEPTED, server, NULL);
-        } else {
-            // master
-            close(server->fds[POLL_FDS_CLIENT].fd);
-            set_empty_fd(server->fds, POLL_FDS_CLIENT);
-            log_info(server->logger, "[MASTER] New client accepted and will be processed by worker with pid: %d.", pid);
+        server->client_info = client_info_init(addr);
+        if (!server->client_info) {
+            log_error(server->logger, "Error on memory allocation");
+            string_free(addr);
+            return 0;
         }
+
+        log_info(server->logger, "New client accepted client_id: %d.", client_id);
+        set_fd(server->fds, client_fd_number, client_fd);
+        // after step fd will be setted to POLLOUT with hello message
+        server_fsm_step(server->client_info->fsm_state, SERVER_FSM_EV_ACCEPTED, server, NULL);
+        return 1;
     }
-    return 1;
-}
-
-int worker_process(server_t *server) {
-    if (server->fds[POLL_FDS_CLIENT].revents & POLLIN) {
-        // process input from client
-        int res = recv_from_client(server);
-        if (res > 0) {
-            // continue running
-            log_debug(server->logger, "[WORKER %d] Successfully received message from client", getpid());
-            return 1;
-        } else if (res == 0) {
-            // exit process (on close)
-            log_info(server->logger, "[WORKER %d] Client closed connection", getpid());
-            return 0;
-        } else {
-            // exit process (on error)
-            log_error(server->logger, "[WORKER %d] Error on receiving message from client", getpid());
-            return 0;
-        }
-    }
-
-    if (server->fds[POLL_FDS_CLIENT].revents & POLLOUT) {
-        // process output to client
-        if (send_to_client(server) > 0) {
-            log_debug(server->logger, "[WORKER %d] Successfully send message to client", getpid());
-            return 1;
-        } else {
-            log_error(server->logger, "[WORKER %d] Error on sending message to client", getpid());
-            return 0;
-        }
-    }
-
-    log_error(server->logger, "[WORKER %d] Unexpected poll...", getpid());
     return 0;
 }
 
-void server_free(server_t *server) {
+int check_client_fds(server_t *server) {
+    for (size_t client_id = 0; client_id < SERVER_CLIENTS_MAX_CNT; client_id++) {
+        if (is_empty_client(server, client_id))
+            continue;
+        int fd_index = POLL_FDS_CLIENTS_START + client_id;
+
+        if (server->fds[fd_index].revents & POLLIN) {
+            recv_from_client(server, client_id);
+            // TODO(sych) process result (errors);
+            return 1;
+        }
+        if (server->fds[fd_index].revents & POLLOUT) {
+            send_to_client(server, client_id);
+            // TODO(sych) process result (errors);
+            return 1;
+        }
+    }
+    return 0;
+}
+
+void server_free(server_t *server, process_type_t process_type) {
     if (server) {
         for (int i = 0; i < POLL_FDS_COUNT; i++)
             if (server->fds[i].fd != -1)
@@ -185,27 +222,23 @@ void server_free(server_t *server) {
 
         client_info_free(server->client_info);
         parser_free(server->parser);
-
-        if (server->is_master) {
-            // wait workers
+        if (process_type == PROCESS_TYPE_MASTER) {
+            // wait childs
             int wpid, status = 0;
             while ((wpid = waitpid(-1, &status, WNOHANG)) > 0)
                 continue;
         }
-        log_info(server->logger, "[PROCESS %d] stopped.", getpid());
-        server_config_free(server->config);
         free(server);
     }
 }
 
 int server_set_output_buf(server_t *server, char* msg, size_t msg_size) {
     if (client_info_set_output_buf(server->client_info, msg, msg_size) < 0) {
-        log_error(server->logger, "[WORKER %d] error in client_info_set_output_buf.", getpid());
+        log_error(server->logger, "Error in client_info_set_output_buf.");
         return -1;
     }
 
-    server->fds[POLL_FDS_CLIENT].events = POLLOUT;
-    server->fds[POLL_FDS_CLIENT].revents = 0;
+    switch_fd(server->fds, POLL_FDS_CLIENT, POLLOUT);
     return 0;
 }
 
@@ -214,30 +247,32 @@ int accept_new_client(server_t *server, string_t **host) {
     socklen_t addrlen = sizeof(struct sockaddr);
     int client_fd = accept(server->fds[POLL_FDS_SERVER].fd, &addr, &addrlen);
     if (client_fd < 0) {
-        log_error(server->logger, "[MASTER] Can not accept client fd.");
+        log_error(server->logger, "Can not accept client fd.");
         return client_fd;
     }
 
+    // get client host
     char hbuf[NI_MAXHOST];
     *host = NULL;
     if (getnameinfo(&addr, addrlen, hbuf, sizeof(hbuf), NULL, 0, NI_NAMEREQD)) {
-        log_warning(server->logger, "[MASTER] could not resolve client hostname");
+        log_warning(server->logger, "Could not resolve client hostname");
     } else {
         *host = string_create(hbuf, strlen(hbuf));
         if (*host == NULL) {
-            log_error(server->logger, "[MASTER] Error on memory allocation");
+            log_error(server->logger, "Error on memory allocation");
             return -1;
         }
-        log_info(server->logger, "[MASTER] connected to client with host=%s", hbuf);
+        log_info(server->logger, "Connected to client with host=%s", hbuf);
     }
 
-    set_pollin_fd(server->fds, POLL_FDS_CLIENT, client_fd);
-    return 0;
+    return client_fd;
 }
 
-int recv_from_client(server_t *server) {
+int recv_from_client(server_t *server, int client_id) {
     char buf[BUFFER_SIZE];
-    int received = recv(server->fds[POLL_FDS_CLIENT].fd, buf, BUFFER_SIZE, 0);
+    int fd_index = POLL_FDS_CLIENTS_START + client_id;
+
+    int received = recv(server->fds[fd_index].fd, buf, BUFFER_SIZE, 0);
 
     if (received == 0) {
         server_fsm_step(server->client_info->fsm_state, SERVER_FSM_EV_CON_LOST, server, NULL);
@@ -249,17 +284,16 @@ int recv_from_client(server_t *server) {
 
         server->client_info->last_message_time = time(NULL);
 
-
-        if (!is_in_state(server, SERVER_FSM_ST_DATA))
-            recv_cmd_from_client(server, buf);
+        if (is_in_state(server, SERVER_FSM_ST_DATA))
+            recv_mail_from_client(server, client_id, buf);
         else
-            recv_mail_from_client(server, buf);
+            recv_cmd_from_client(server, client_id, buf);
     }
 
     return received;
 }
 
-void recv_mail_from_client(server_t *server, char *buf) {
+void recv_mail_from_client(server_t *server, int client_id, char *buf) {
     char *end = parser_parse_end_of_data(server->client_info->input_buf->str);
 
     if (end) {
@@ -271,21 +305,20 @@ void recv_mail_from_client(server_t *server, char *buf) {
         client_info_trim_input_buf(server->client_info, message_size + end_size);
 
         if (!server->client_info->mail) {
-            log_error(server->logger, "[WORKER %d] error on memory allocation.", getpid());
+            log_error(server->logger, "Error on memory allocation.");
             // TODO(sych) add additional error handling
         }
 
         server_fsm_step(server->client_info->fsm_state, SERVER_FSM_EV_MAIL_END, server, NULL);
         if (is_in_state(server, SERVER_FSM_ST_INVALID))
-            log_error(server->logger, "[WORKER %d] error in server_fsm_step.", getpid());
+            log_error(server->logger, "Error in server_fsm_step.");
     } else {
         // set socket to listen mode - continue receiving DATA
-        server->fds[POLL_FDS_CLIENT].events = POLLIN;
-        server->fds[POLL_FDS_CLIENT].revents = 0;
+        switch_fd(server->fds, POLL_FDS_CLIENTS_START + client_id, POLLIN);
     }
 }
 
-void recv_cmd_from_client(server_t *server, char *buf) {
+void recv_cmd_from_client(server_t *server, int client_id, char *buf) {
     char *end = parser_parse_end_of_line(server->client_info->input_buf->str);
 
     if (end) {
@@ -295,17 +328,19 @@ void recv_cmd_from_client(server_t *server, char *buf) {
 
         log_debug(server->logger, "current input buffer: %s",  server->client_info->input_buf->str);
         parser_result_t * p_res = parser_parse(server->parser, server->client_info->input_buf->str, message_size);
+        // after this method fsm_handler will use server_set_output_buf() which change fd to POLLOUT
         process_parser_result(server, p_res);
         parser_result_free(p_res);
         client_info_trim_input_buf(server->client_info, message_size + end_size);
     }
 }
 
-int send_to_client(server_t *server) {
+int send_to_client(server_t *server, int client_id) {
     char buf[BUFFER_SIZE];
+    int fd_index = POLL_FDS_CLIENTS_START + client_id;
     memcpy(buf, server->client_info->output_buf->str, BUFFER_SIZE);
 
-    int send_len = send(server->fds[POLL_FDS_CLIENT].fd, buf, strlen(buf), 0);
+    int send_len = send(server->fds[fd_index].fd, buf, strlen(buf), 0);
 
     if (send_len > 0) {
         server->client_info->last_message_time = time(NULL);
@@ -316,16 +351,13 @@ int send_to_client(server_t *server) {
             string_clear(server->client_info->output_buf);
 
             // set socket to listen mode
-            server->fds[POLL_FDS_CLIENT].events = POLLIN;
-            server->fds[POLL_FDS_CLIENT].revents = 0;
-
+            switch_fd(server->fds, fd_index, POLLIN);
         } else {
             // have more data in output_buf
             string_begining_trim(server->client_info->output_buf, BUFFER_SIZE);
 
             // need more POLLOUT
-            server->fds[POLL_FDS_CLIENT].events = POLLOUT;
-            server->fds[POLL_FDS_CLIENT].revents = 0;
+            switch_fd(server->fds, fd_index, POLLOUT);
         }
 
         // process correct closing
@@ -335,16 +367,19 @@ int send_to_client(server_t *server) {
     return send_len;
 }
 
-void set_pollin_fd(struct pollfd* fds, int index, int fd) {
+void set_fd(struct pollfd* fds, int index, int fd) {
     fds[index].fd = fd;
-    fds[index].events = POLLIN;
+    fds[index].events = 0;
     fds[index].revents = 0;
 }
 
-void set_empty_fd(struct pollfd* fds, int index) {
-    fds[index].fd = -1;
-    fds[index].events = 0;
+void switch_fd(struct pollfd* fds, int index, short events) {
+    fds[index].events = events;
     fds[index].revents = 0;
+}
+
+void set_fd_empty(struct pollfd* fds, int index) {
+    set_fd(fds, index, -1);
 }
 
 int bind_server_fd(int port) {
@@ -377,29 +412,51 @@ int bind_server_fd(int port) {
     return server_fd;
 }
 
-void check_timeout(server_t *server) {
-    // if timeout is not interesting now - skip check
-    if (is_in_state(server, SERVER_FSM_ST_TIMEOUT)
-        || is_in_state(server, SERVER_FSM_ST_QUIT)
-        || is_in_state(server, SERVER_FSM_ST_DONE)
-        || is_in_state(server, SERVER_FSM_ST_INVALID))
-        return;
+void clear_client(server_t *server, int client_id) {
+    int fd_index = POLL_FDS_CLIENTS_START + client_id;
+    close(server->fds[fd_index].fd);
+    set_fd_empty(server->fds, fd_index);
+    if (server->client_info)
+        client_info_free(server->client_info);
+    server->client_info = NULL;
+}
 
-    if (time(NULL) - server->client_info->last_message_time > SERVER_TIMEOUT) {
-        server_fsm_step(server->client_info->fsm_state, SERVER_FSM_EV_TIMEOUT, server, NULL);
+int is_empty_client(server_t *server, int client_id) {
+    return (server->fds[POLL_FDS_CLIENTS_START + client_id].fd == -1 && server->client_info == NULL);
+}
 
-        if (is_in_state(server, SERVER_FSM_ST_INVALID))
-            log_error(server->logger, "[WORKER %d] error in server_fsm_step to timeout.", getpid());
-        else
-            log_info(server->logger, "[WORKER %d] Start exiting on timeout...", getpid());
+void check_client_exits(server_t *server) {
+    // TODO process many clients
+    if (server->client_info) {
+        if (is_in_state(server, SERVER_FSM_ST_INVALID) || is_in_state(server, SERVER_FSM_ST_DONE)) {
+            clear_client(server, 0);
+            log_info(server->logger, "Close connection with client %d", 0);
+        }
     }
 }
 
-int check_state(server_t *server) {
-    if (is_in_state(server, SERVER_FSM_ST_INVALID))
-        send_to_client(server);
+void check_errors(server_t *server) {
+    // TODO process many clients
+    if (server->client_info) {
+        if (is_in_state(server, SERVER_FSM_ST_INVALID))
+            send_to_client(server, 0);
+    }
+}
 
-    return (!is_in_state(server, SERVER_FSM_ST_INVALID) && !is_in_state(server, SERVER_FSM_ST_DONE));
+void check_timeouts(server_t *server) {
+    // TODO process many clients
+    if (server->client_info) {
+        // if timeout is not interesting now - skip check
+        if (is_in_state(server, SERVER_FSM_ST_TIMEOUT)
+            || is_in_state(server, SERVER_FSM_ST_QUIT)
+            || is_in_state(server, SERVER_FSM_ST_DONE)
+            || is_in_state(server, SERVER_FSM_ST_INVALID))
+            return;
+
+        if (time(NULL) - server->client_info->last_message_time > SERVER_TIMEOUT) {
+            server_fsm_step(server->client_info->fsm_state, SERVER_FSM_EV_TIMEOUT, server, NULL);
+        }
+    }
 }
 
 int is_in_state(server_t *server, te_server_fsm_state state) {
@@ -451,10 +508,10 @@ void process_parser_result(server_t *server, parser_result_t *result) {
         server_fsm_step(server->client_info->fsm_state, SERVER_FSM_EV_CMD_VRFY, server, NULL);
         break;
     default:
-        log_error(server->logger, "[WORKER %d] unexpected smtp_cmd %d.", getpid(), result->smtp_cmd);
+        log_error(server->logger, "Unexpected smtp_cmd %d.", result->smtp_cmd);
         break;
     }
 
     if (is_in_state(server, SERVER_FSM_ST_INVALID))
-        log_error(server->logger, "[WORKER %d] error in server_fsm_step with cmd %d.", getpid(), result->smtp_cmd);
+        log_error(server->logger, "Error in server_fsm_step with cmd %d.", result->smtp_cmd);
 }
