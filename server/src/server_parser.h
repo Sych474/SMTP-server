@@ -1,5 +1,5 @@
-#ifndef SERVER_SRC_PARSER_H_
-#define SERVER_SRC_PARSER_H_
+#ifndef SERVER_SRC_SERVER_PARSER_H_
+#define SERVER_SRC_SERVER_PARSER_H_
 
 #include <string.h>
 #include <stdlib.h>
@@ -34,21 +34,21 @@ typedef struct compiled_regexp_struct {
     pcre_extra* extra;
 } compiled_regexp_t;
 
-typedef struct parser_struct {
+typedef struct server_parser_struct {
     compiled_regexp_t compiled_regexps[SMTP_CMD_CNT];
-} parser_t;
+} server_parser_t;
 
-typedef struct parser_result_struct {
+typedef struct server_parser_result_struct {
     smtp_cmds_t smtp_cmd;
     string_t *data;
-} parser_result_t;
+} server_parser_result_t;
 
-parser_t *parser_init();
-void parser_free(parser_t * parser);
-parser_result_t *parser_parse(parser_t * parser, char* msg, int msg_len);
-char* parser_parse_end_of_line(char* msg);
-char* parser_parse_end_of_data(char* msg);
+server_parser_t *server_parser_init();
+void server_parser_free(server_parser_t * parser);
+server_parser_result_t *server_parser_parse(server_parser_t * parser, char* msg, int msg_len);
+char* server_parser_parse_end_of_line(char* msg);
+char* server_parser_parse_end_of_data(char* msg);
 
-void parser_result_free(parser_result_t *parser);
+void server_parser_result_free(server_parser_result_t *parser);
 
-#endif  // SERVER_SRC_PARSER_H_
+#endif  // SERVER_SRC_SERVER_PARSER_H_

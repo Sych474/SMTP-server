@@ -41,7 +41,7 @@ typedef struct logger_mq_msg_struct {
     char msg_payload[MAX_MSG_SIZE];
 } logger_mq_msg_t;
 
-logger_t *logger_start(const char *log_filename, process_info_t* process_info);
+logger_t *logger_start(const char *log_filename, process_info_t **process_info);
 void logger_stop(logger_t *logger);
 void logger_free(logger_t *logger, process_type_t process_type);
 

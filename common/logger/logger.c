@@ -8,7 +8,7 @@ int logger_send_alive_msg(logger_t *logger);
 void logger_main_loop(logger_t *logger);
 
 
-logger_t *logger_start(const char *log_filename, process_info_t* process_info) {
+logger_t *logger_start(const char *log_filename, process_info_t **process_info) {
     pid_t pid;
 
     printf("Logger: Initializing\n");
@@ -21,7 +21,14 @@ logger_t *logger_start(const char *log_filename, process_info_t* process_info) {
 
     if ((pid = fork()) == 0) {
         // child (logger)
-        process_info->process_type = PROCESS_TYPE_LOGGER;
+        process_info_free(*process_info);
+        *process_info = process_info_init(getpid(), PROCESS_TYPE_LOGGER, 0);
+        if (!(*process_info)) {
+            printf("Logger: error on memory allocation... exit logger...\n");
+            msgctl(mq, IPC_RMID, NULL);
+            return NULL;
+        }
+
         signal(SIGINT, SIG_IGN);
 
         printf("Logger: Logger process forked with pid: %d\n", getpid());
@@ -29,6 +36,14 @@ logger_t *logger_start(const char *log_filename, process_info_t* process_info) {
         return logger_child_process(log_filename, mq);
     } else {
         // parent
+        process_info_t *logger_process_info = process_info_init(getpid(), PROCESS_TYPE_LOGGER, 0);
+        if (!logger_process_info || process_info_add_child(*process_info, logger_process_info) < 0) {
+            process_info_free(logger_process_info);
+            printf("Master: error process_info_allocation\n");
+            msgctl(mq, IPC_RMID, NULL);
+            kill(pid, SIGTERM);
+            return NULL;
+        }
         return logger_master_process(mq, pid);
     }
     return NULL;
@@ -43,8 +58,6 @@ void logger_stop(logger_t *logger) {
         printf("Error on sending exit message to logger!\n");
         kill(logger->logger_process_pid, SIGTERM);
     }
-
-    wait(NULL);
 }
 
 logger_t *logger_master_process(int mq, int child_pid) {

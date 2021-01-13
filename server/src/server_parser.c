@@ -1,4 +1,4 @@
-#include "parser.h"
+#include "server_parser.h"
 
 const char* smtp_regexps[SMTP_CMD_CNT] = {
     HELO_REGEXP,
@@ -11,8 +11,8 @@ const char* smtp_regexps[SMTP_CMD_CNT] = {
     VRFY_REGEXP
 };
 
-parser_t *parser_init() {
-    parser_t *parser = malloc(sizeof(parser_t));
+server_parser_t *server_parser_init() {
+    server_parser_t *parser = malloc(sizeof(server_parser_t));
     if (!parser)
         return NULL;
 
@@ -23,13 +23,13 @@ parser_t *parser_init() {
         parser->compiled_regexps[i].regexp =
             pcre_compile(smtp_regexps[i], PCRE_ANCHORED, &pcre_error, &pcre_error_offset, NULL);
         if (pcre_error != NULL) {
-            parser_free(parser);
+            server_parser_free(parser);
             return NULL;
         }
 
         parser->compiled_regexps[i].extra = pcre_study(parser->compiled_regexps[i].regexp, 0, &pcre_error);
         if (pcre_error != NULL) {
-            parser_free(parser);
+            server_parser_free(parser);
             return NULL;
         }
     }
@@ -37,7 +37,7 @@ parser_t *parser_init() {
     return parser;
 }
 
-parser_result_t *parser_parse(parser_t *parser, char* msg, int msg_len) {
+server_parser_result_t *server_parser_parse(server_parser_t *parser, char* msg, int msg_len) {
     int ovector[OVECSIZE];
 
     for (int i = 0; i < SMTP_CMD_CNT; i++) {
@@ -48,7 +48,7 @@ parser_result_t *parser_parse(parser_t *parser, char* msg, int msg_len) {
             return NULL;
 
         if (res > 0) {
-            parser_result_t *result = malloc(sizeof(parser_result_t));
+            server_parser_result_t *result = malloc(sizeof(server_parser_result_t));
             if (!parser)
                 return NULL;
 
@@ -74,7 +74,7 @@ parser_result_t *parser_parse(parser_t *parser, char* msg, int msg_len) {
     return NULL;
 }
 
-void parser_free(parser_t *parser) {
+void server_parser_free(server_parser_t *parser) {
     if (parser) {
         for (int i = 0; i < SMTP_CMD_CNT; i++) {
             if (parser->compiled_regexps[i].regexp != NULL)
@@ -87,17 +87,17 @@ void parser_free(parser_t *parser) {
     }
 }
 
-void parser_result_free(parser_result_t *result) {
+void server_parser_result_free(server_parser_result_t *result) {
     if (result && result->data) {
         string_free(result->data);
         free(result);
     }
 }
 
-char* parser_parse_end_of_line(char* msg) {
+char* server_parser_parse_end_of_line(char* msg) {
     return strstr(msg, PARSER_EOL);
 }
 
-char* parser_parse_end_of_data(char* msg) {
+char* server_parser_parse_end_of_data(char* msg) {
     return strstr(msg, PARSER_EOD);
 }

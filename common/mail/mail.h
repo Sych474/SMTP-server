@@ -7,7 +7,6 @@
 #include "../strings/strings.h"
 #include "../logger/logger.h"
 #include "../address/address.h"
-#include "parser.h"
 
 #define MAIL_MAX_RCPTS 128
 

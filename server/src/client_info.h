@@ -29,6 +29,5 @@ void client_info_free(client_info_t *client_info);
 int client_info_set_output_buf(client_info_t *client_info, char *output, size_t len);
 int client_info_concat_input_buf(client_info_t *client_info, char *input, size_t len);
 void client_info_trim_input_buf(client_info_t *client_info, size_t trim);
-te_server_fsm_state client_info_set_state(client_info_t *client_info, te_server_fsm_state new_state);
 
 #endif  // SERVER_SRC_CLIENT_INFO_H_

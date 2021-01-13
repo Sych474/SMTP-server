@@ -5,6 +5,7 @@ type   = reentrant;
 prefix = server_fsm;
 
 cookie = "void *server";
+cookie = "int client_id";
 cookie = "void *data_str";
 
 /* Состояния init, invalid, done в fsn есть по умолчанию */
