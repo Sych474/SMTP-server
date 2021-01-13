@@ -49,7 +49,7 @@ server_parser_result_t *server_parser_parse(server_parser_t *parser, char* msg, 
 
         if (res > 0) {
             server_parser_result_t *result = malloc(sizeof(server_parser_result_t));
-            if (!parser)
+            if (!result)
                 return NULL;
 
             // cmds and regexps in compiled_regexps indexes are equal
@@ -61,12 +61,12 @@ server_parser_result_t *server_parser_parse(server_parser_t *parser, char* msg, 
                 pcre_get_substring(msg, ovector, res, 1, &(text));
                 int len = ovector[3] - ovector[2];
                 result->data = string_create(text, len);
+                if (text)
+                    pcre_free_substring(text);
                 if (!result->data) {
                     free(result);
                     return NULL;
                 }
-                if (text)
-                    pcre_free_substring(text);
             }
             return result;
         }
@@ -88,16 +88,16 @@ void server_parser_free(server_parser_t *parser) {
 }
 
 void server_parser_result_free(server_parser_result_t *result) {
-    if (result && result->data) {
+    if (result) {
         string_free(result->data);
         free(result);
     }
 }
 
-char* server_parser_parse_end_of_line(char* msg) {
+char* server_parser_parse_end_of_line(const char* msg) {
     return strstr(msg, PARSER_EOL);
 }
 
-char* server_parser_parse_end_of_data(char* msg) {
+char* server_parser_parse_end_of_data(const char* msg) {
     return strstr(msg, PARSER_EOD);
 }

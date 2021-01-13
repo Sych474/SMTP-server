@@ -25,7 +25,7 @@
 #include "client_info.h"
 #include "process_info.h"
 
-#define BUFFER_SIZE             1024
+#define BUFFER_SIZE             1023
 #define SERVER_CLIENTS_MAX_CNT  128
 
 #define POLL_FDS_COUNT          (SERVER_CLIENTS_MAX_CNT + 2)

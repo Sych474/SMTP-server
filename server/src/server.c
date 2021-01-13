@@ -158,12 +158,11 @@ int check_exit(server_t *server) {
 }
 
 int get_empty_client_id(server_t *server) {
-    // STUB
-    // TODO(sych) implement
-    if (is_empty_client(server, 0))
-        return 0;
-    else
-        return -1;
+    for (size_t i = 0; i < SERVER_CLIENTS_MAX_CNT; i++)
+        if (is_empty_client(server, i))
+            return i;
+
+    return -1;
 }
 
 int check_accept(server_t *server) {
@@ -277,7 +276,7 @@ int recv_from_client(server_t *server, int client_id) {
     char buf[BUFFER_SIZE];
     int fd_index = POLL_FDS_CLIENTS_START + client_id;
 
-    int received = recv(server->fds[fd_index].fd, buf, BUFFER_SIZE, 0);
+    int received = recv(server->fds[fd_index].fd, buf, BUFFER_SIZE - 1, 0);
 
     if (received == 0) {
         server_fsm_step(server->client_infos[client_id]->fsm_state, SERVER_FSM_EV_CON_LOST, server, client_id, NULL);
