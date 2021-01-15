@@ -1,0 +1,12 @@
+printf
+fprintf
+strstr
+strlen
+memcpy
+memset
+free
+malloc
+log_info
+log_debug
+log_warning
+log_error
