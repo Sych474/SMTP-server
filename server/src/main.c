@@ -67,10 +67,10 @@ int main(int argc, char *argv[]) {
                     if (process_info->childs[i]->type == PROCESS_TYPE_WORKER) {
                         log_debug(logger, "waiting for %d", process_info->childs[i]->pid);
                         waitpid(process_info->childs[i]->pid, &status, 0);
+                    } else {
+                        if (process_info->childs[i]->type == PROCESS_TYPE_LOGGER)
+                            logger_pid = process_info->childs[i]->pid;
                     }
-
-                    else if (process_info->childs[i]->type == PROCESS_TYPE_LOGGER)
-                        logger_pid = process_info->childs[i]->pid;
                 }
             }
 
