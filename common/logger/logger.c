@@ -36,7 +36,7 @@ logger_t *logger_start(const char *log_filename, process_info_t **process_info) 
         return logger_child_process(log_filename, mq);
     } else {
         // parent
-        process_info_t *logger_process_info = process_info_init(getpid(), PROCESS_TYPE_LOGGER, 0);
+        process_info_t *logger_process_info = process_info_init(pid, PROCESS_TYPE_LOGGER, 0);
         if (!logger_process_info || process_info_add_child(*process_info, logger_process_info) < 0) {
             process_info_free(logger_process_info);
             printf("Master: error process_info_allocation\n");
@@ -80,7 +80,7 @@ logger_t *logger_master_process(int mq, int child_pid) {
 
         logger->mq = mq;
         logger->fd = NULL;
-        logger->logger_process_pid = child_pid;
+        logger->logger_process_pid = child_pid;  // TODO(sych) check and remove
         printf("Logger: Ready. \n");
         return logger;
 }
