@@ -12,7 +12,7 @@ TEST_UNIT_OUT		:= test-unit.out
 TEST_STYLE_OUT		:= test-style.out
 TEST_SYSTEM_OUT		:= test-system.out
 TEST_MEMORY_OUT		:= test-memory.out
-
+TEST_SYSTEM_MEMORY_OUT := test-system-memory.out
 
 COMMON_SRC_DIRS		:=  logger strings mail address tests privileges process_info
 COMMON_SRC_DIRS		:=  $(addprefix $(COMMON_DIR),$(COMMON_SRC_DIRS))
@@ -31,33 +31,37 @@ TEST_OBJ_EXCEPTIONS   := main.o
 SERVER_OBJ_FILES      := $(filter-out $(SERVER_OBJ_EXCEPTIONS), $(OBJ_FILES))
 TEST_OBJ_FILES 		  :=  $(filter-out $(TEST_OBJ_EXCEPTIONS), $(OBJ_FILES))
 
-.PHONY: all clean server test test-unit test-style test-memory test-system
+.PHONY: all build-server build-tests clean server test test-unit test-style test-memory test-system
 
 VPATH := $(SRC_DIRS)
 
-all:
+all: build-server
+
+build-server:
 	mkdir -p $(BUILD_DIR)
 	make server --directory=$(BUILD_DIR) --makefile=../Makefile
 
-test-unit:
+build-tests:
 	mkdir -p $(TEST_BUILD_DIR)
 	make test --directory=$(TEST_BUILD_DIR) --makefile=../Makefile
+
+test-unit: build-tests
 	./test_build/test > $(TEST_UNIT_OUT)
-	#cat $(TEST_UNIT_OUT)
+	cat $(TEST_UNIT_OUT)
 
 test-style:
 	$(STYLE_CHECKER) $(STYLE_CHECKER_ARGS) $(STYLE_FILES) > $(TEST_STYLE_OUT)
 	cat $(TEST_STYLE_OUT)
 
-test-memory:
-	mkdir -p $(TEST_BUILD_DIR)
-	make test --directory=$(TEST_BUILD_DIR) --makefile=../Makefile
+test-memory: build-server build-tests
 	valgrind --log-file="$(TEST_MEMORY_OUT)" ./test_build/test
+	python3 ./tests/system/test.py valgrind $(TEST_SYSTEM_MEMORY_OUT)
 	cat $(TEST_MEMORY_OUT)
+	cat $(TEST_SYSTEM_MEMORY_OUT)
 
-test-system:
-	python3 ./tests/system/test.py ./tests/system/test_files > $(TEST_SYSTEM_OUT)
-	#cat $(TEST_SYSTEM_OUT)
+test-system: build-server
+	python3 ./tests/system/test.py > $(TEST_SYSTEM_OUT)
+	cat $(TEST_SYSTEM_OUT)
 
 server: $(SERVER_OBJ_FILES)
 	$(CC) $(CFLAGS) $^ -o $@ $(CFLAGS_END)

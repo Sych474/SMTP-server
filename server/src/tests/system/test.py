@@ -4,18 +4,37 @@ import sys
 import os
 import shutil
 import smtplib
+import signal
+import time
+import subprocess
+import psutil
 
 server_host = '127.0.0.1'
 server_port = 8080
 local_domain = "local.com"
 base_maildir = "/home/netroot/test_mail"
+test_data_dir = "./tests/system/test_files"
 
-if (len(sys.argv) != 2):
-    print("usage: test.py [test_data_dir]")
+if (len(sys.argv) != 1 and len(sys.argv) != 3):
+    print("usage: test.py [valgrind] [valgrind_ountut_filename.txt] \n examples: test.py \n test.py valgrind output.out")
     exit(1)
 
-test_data_dir = sys.argv[1]
+valgrind = (len(sys.argv) == 3) and (sys.argv[1] == 'valgrind')
+valgrind_output = None
+if (valgrind):
+    valgrind_output = sys.argv[2]
 
+def send_sigint_to_childs(parent_pid, sig=signal.SIGINT):
+    try:
+      parent = psutil.Process(parent_pid)
+    except psutil.NoSuchProcess:
+      return
+    children = parent.children(recursive=True)
+    for process in children:
+        try:
+            process.send_signal(sig)
+        except NoSuchProcess:
+            pass
 
 def get_mail_filenames(to_addr):
     dir = base_maildir
@@ -161,11 +180,36 @@ def many_rcpt_mail_test():
     return True
 
 
-print("start SMTP server system tests...")
-shutil.rmtree(base_maildir, ignore_errors=True)
-print("base maildir removed")
-run_test(simple_mail_test, "simple_mail_test")
-run_test(many_mails_test, "many_mails_test")
-run_test(one_mb_mail_test, "one_mb_mail_test")
-run_test(many_rcpt_mail_test, "many_rcpt_mail_test")
-print("finish SMTP server system tests.")
+print("Start SMTP server system tests...")
+
+cmd = []
+if (valgrind):
+    print("Start SMTP server under valgrind...")
+    cmd = ["valgrind", "--log-file=" + valgrind_output, "./build/server", "server.ini"]
+else:
+    print("Start SMTP server...")
+    cmd = ["./build/server", "server.ini"]
+
+p = subprocess.Popen(
+    cmd,
+    stdout = subprocess.DEVNULL,
+    stderr = subprocess.STDOUT)
+
+if (os.getpid() != p.pid):
+    if (valgrind):
+        time.sleep(2)
+    else:
+        time.sleep(1)
+    shutil.rmtree(base_maildir, ignore_errors=True)
+    print("base maildir removed")
+    run_test(simple_mail_test, "simple_mail_test")
+    run_test(many_mails_test, "many_mails_test")
+    run_test(one_mb_mail_test, "one_mb_mail_test")
+    run_test(many_rcpt_mail_test, "many_rcpt_mail_test")
+
+    send_sigint_to_childs(os.getpid())
+    print("send Ctrl+C to SMTP server ...")
+    p.wait()
+    print("SMTP server is shutdown ...")
+    print("Finish SMTP server system tests.")
+

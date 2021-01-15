@@ -16,8 +16,7 @@ test-style:
 	make test-style --directory=$(SRC_DIR)
 
 test-system:
-	echo "system test!"
-	#make test-style --directory=$(SRC_DIR)
+	make test-system --directory=$(SRC_DIR)
 
 test-memory:
 	make test-memory --directory=$(SRC_DIR)
