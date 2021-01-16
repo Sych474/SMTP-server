@@ -41,14 +41,14 @@ int mail_add_rcpt(mail_t *mail, address_t *rcpt) {
 }
 
 int mail_write(char *filename, mail_t *mail, logger_t *logger) {
-    log_debug(logger, "[WORKER %d] mail_write start", getpid());
+    log_debug(logger, "mail_write start");
 
     FILE *fd = fopen(filename, "w");
     if (fd == NULL) {
         log_error(logger, "Error on opening file %s", filename);
         return -1;
     }
-    log_debug(logger, "[WORKER %d] file opened", getpid());
+    log_debug(logger, "file opened");
 
     fprintf(fd, "%s %s\n", MAIL_FROM_HEADER, address_get_str(mail->from));
     for (size_t i = 0; i < mail->rcpts_cnt; i++) {
@@ -58,7 +58,7 @@ int mail_write(char *filename, mail_t *mail, logger_t *logger) {
     fprintf(fd, "\n");
     fprintf(fd, "%s", mail->data->str);
     fclose(fd);
-    log_debug(logger, "[WORKER %d] mail_write done", getpid());
+    log_debug(logger, "mail_write done");
     return 0;
 }
 

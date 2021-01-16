@@ -24,11 +24,11 @@ int maildir_save_mail(mail_t *mail, char *base_mail_dir, logger_t *logger) {
 
 int maildir_save_mail_internal(mail_t *mail, address_t *address, char *base_mail_dir, logger_t *logger) {
     char *filename = maildir_get_filename();
-    log_debug(logger, "[WORKER %d] maildir_save_mail_internal filename: %s", getpid(), filename);
+    log_debug(logger, "maildir_save_mail_internal filename: %s", filename);
     char* tmp_dir = maildir_get_dir(base_mail_dir, address, MAILDIR_TMP);
-    log_debug(logger, "[WORKER %d] maildir_save_mail_internal tmp_dir: %s", getpid(), tmp_dir);
+    log_debug(logger, "maildir_save_mail_internal tmp_dir: %s", tmp_dir);
     char* new_dir = maildir_get_dir(base_mail_dir, address, MAILDIR_NEW);
-    log_debug(logger, "[WORKER %d] maildir_save_mail_internal new_dir: %s", getpid(), new_dir);
+    log_debug(logger, "maildir_save_mail_internal new_dir: %s", new_dir);
 
     if (filename == NULL || tmp_dir == NULL || new_dir == NULL) {
         if (filename)
@@ -41,11 +41,11 @@ int maildir_save_mail_internal(mail_t *mail, address_t *address, char *base_mail
     }
 
     if (create_dir_if_not_exists(tmp_dir) < 0 || create_dir_if_not_exists(new_dir) < 0) {
-        log_error(logger, "[WORKER %d] create_dir_if_not_exists error", getpid());
+        log_error(logger, "create_dir_if_not_exists error");
         return -1;
     }
 
-    log_debug(logger, "[WORKER %d] create_dir_if_not_exists done", getpid());
+    log_debug(logger, "create_dir_if_not_exists done");
 
     char *tmp_filename = concat_dir_and_filename(tmp_dir, filename);
     char *new_filename = concat_dir_and_filename(new_dir, filename);
@@ -62,19 +62,19 @@ int maildir_save_mail_internal(mail_t *mail, address_t *address, char *base_mail
         return -1;
     }
 
-    log_debug(logger, "[WORKER %d] tmp_filename: %s", getpid(), tmp_filename);
-    log_debug(logger, "[WORKER %d] new_filename: %s", getpid(), new_filename);
+    log_debug(logger, "tmp_filename: %s", tmp_filename);
+    log_debug(logger, "new_filename: %s", new_filename);
 
     if (mail_write(tmp_filename, mail, logger) < 0) {
         free(tmp_filename);
         free(new_filename);
-        log_error(logger, "[WORKER %d] error on writing file: %s", getpid(), tmp_filename);
+        log_error(logger, "error on writing file: %s", tmp_filename);
         return -1;
     }
-    log_info(logger, "[WORKER %d] Mail written: %s", getpid(), tmp_filename);
+    log_info(logger, "Mail written: %s", tmp_filename);
 
     rename(tmp_filename, new_filename);
-    log_info(logger, "[WORKER %d] Mail moved to: %s", getpid(), new_filename);
+    log_info(logger, "Mail moved to: %s", new_filename);
 
     free(tmp_filename);
     free(new_filename);
