@@ -24,6 +24,7 @@
 #include "server-fsm.h"
 #include "client_info.h"
 #include "process_info.h"
+#include "fd_helpers.h"
 
 #define BUFFER_SIZE             1023
 #define SERVER_CLIENTS_MAX_CNT  128
