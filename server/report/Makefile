@@ -16,7 +16,6 @@ FSM2DOT			:= ../utils/def2dot
 .PHONY: all report clean clean-report $(addsuffix .dot, $(SRCS_FOR_PDFS))
 
 all:
-	echo $(addprefix $(BUILD_DIR)/, $(PDFS))
 	mkdir -p $(TEX_DIR)/$(BUILD_DIR)
 	cp -a $(DOT_DIR)/. $(TEX_DIR)/$(BUILD_DIR)
 	make report --directory=$(TEX_DIR) --makefile=../Makefile
