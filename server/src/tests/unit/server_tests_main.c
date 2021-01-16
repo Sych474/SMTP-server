@@ -9,7 +9,9 @@ int main(int argc, char *argv[]) {
         return CU_get_error();
     }
 
-    int res = fill_common_test_suites();
+    int res;
+
+    res = fill_common_test_suites();
     if (res) {
         perror("Error on filling common test suites!");
         return res;

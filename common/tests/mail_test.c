@@ -34,6 +34,7 @@ void mail_add_rcpt_test() {
 
     // Finalize
     mail_free(mail);
+    string_free(str);
     address_free(address);
 }
 
@@ -56,6 +57,8 @@ void mail_add_rcpt_test_max_rcpt_cnt() {
 
     // Finalize
     mail_free(mail);
+    string_free(str);
+    string_free(other_str);
     address_free(other_address);
     address_free(address);
 }

@@ -1,0 +1,21 @@
+digraph G {
+    MASTER -> LOGGER[style=dotted];
+    LOGGER -> MASTER[style=dotted];
+    WORKER -> LOGGER[style=dotted];
+    MASTER -> LOGGER[color=blue];
+    MASTER -> WORKER[color=blue];
+
+    subgraph cluster_01 {
+        label = "Legend";
+        node [shape=point]
+        {
+            rank=same
+            d0 [style = invis];
+            d1 [style = invis];
+            p0 [style = invis];
+            p1 [style = invis];
+        }
+        d0 -> d1 [label=fork color=blue]
+        p0 -> p1 [label=data style=dotted]
+    }
+}

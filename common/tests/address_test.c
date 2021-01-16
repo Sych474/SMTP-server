@@ -17,6 +17,7 @@ void address_init_test_local() {
 
     // Finalize
     address_free(address);
+    string_free(str);
 }
 
 void address_init_test_remote() {
@@ -32,6 +33,7 @@ void address_init_test_remote() {
 
     // Finalize
     address_free(address);
+    string_free(str);
 }
 
 #define TEST_ADDRESS_TRIM_QUOTES_ADDR " \t \"addr@test.ru\"  "
@@ -73,6 +75,7 @@ void address_get_str_test() {
 
     // Finalize
     address_free(address);
+    string_free(str);
 }
 
 void address_get_username_test() {
@@ -88,6 +91,7 @@ void address_get_username_test() {
 
     // Finalize
     address_free(address);
+    string_free(str);
     string_free(user);
 }
 
@@ -104,6 +108,7 @@ void address_copy_test() {
     CU_ASSERT_EQUAL(new_address->type, address->type);
 
     // Finalize
+    string_free(str);
     address_free(address);
     address_free(new_address);
 }

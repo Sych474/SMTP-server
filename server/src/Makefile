@@ -8,13 +8,18 @@ STYLE_CHECKER_ARGS  := --linelength=120
 BUILD_DIR 			:= build
 TEST_BUILD_DIR  	:= test_build
 COMMON_DIR			:=  ../../common/
+TEST_UNIT_OUT		:= test-unit.out
+TEST_STYLE_OUT		:= test-style.out
+TEST_SYSTEM_OUT		:= test-system.out
+TEST_MEMORY_OUT		:= test-memory.out
+TEST_SYSTEM_MEMORY_OUT := test-system-memory.out
 
-COMMON_SRC_DIRS		:=  logger strings mail address tests privileges
+COMMON_SRC_DIRS		:=  logger strings mail address tests privileges process_info
 COMMON_SRC_DIRS		:=  $(addprefix $(COMMON_DIR),$(COMMON_SRC_DIRS))
 TEST_DIRS     		:= $(addprefix ../, ./tests/unit $(addprefix $(COMMON_DIR), tests)) #нужны для исключения из обычной сборки
 
-SRC_DIRS  	 		:= . ./tests/unit ./config  ./autogen $(COMMON_SRC_DIRS)
-STYLE_DIRS			:= $(filter-out ./autogen, $(SRC_DIRS))
+SRC_DIRS  	 		:= . ./tests/unit config  autogen fsm_handlers client_info parser $(COMMON_SRC_DIRS)
+STYLE_DIRS			:= $(filter-out autogen parser, $(SRC_DIRS))
 STYLE_FILES 		:= $(wildcard $(addsuffix /*.c, $(STYLE_DIRS))) $(wildcard $(addsuffix /*.h, $(STYLE_DIRS)))
 
 SRC_DIRS     		:= $(addprefix ../,$(SRC_DIRS)) # потому что будем собирать в /build
@@ -26,21 +31,37 @@ TEST_OBJ_EXCEPTIONS   := main.o
 SERVER_OBJ_FILES      := $(filter-out $(SERVER_OBJ_EXCEPTIONS), $(OBJ_FILES))
 TEST_OBJ_FILES 		  :=  $(filter-out $(TEST_OBJ_EXCEPTIONS), $(OBJ_FILES))
 
-.PHONY: all clean server test test-unit test-style
+.PHONY: all build-server build-tests clean server test test-unit test-style test-memory test-system
 
 VPATH := $(SRC_DIRS)
 
-all:
+all: build-server
+
+build-server:
 	mkdir -p $(BUILD_DIR)
 	make server --directory=$(BUILD_DIR) --makefile=../Makefile
 
-test-unit:
+build-tests:
 	mkdir -p $(TEST_BUILD_DIR)
 	make test --directory=$(TEST_BUILD_DIR) --makefile=../Makefile
-	./test_build/test > test.out
+
+test-unit: build-tests
+	./test_build/test > $(TEST_UNIT_OUT)
+	cat $(TEST_UNIT_OUT)
 
 test-style:
-	$(STYLE_CHECKER) $(STYLE_CHECKER_ARGS) $(STYLE_FILES)
+	$(STYLE_CHECKER) $(STYLE_CHECKER_ARGS) $(STYLE_FILES) > $(TEST_STYLE_OUT)
+	cat $(TEST_STYLE_OUT)
+
+test-memory: build-server build-tests
+	valgrind --log-file="$(TEST_MEMORY_OUT)" ./test_build/test
+	python3 ./tests/system/test.py valgrind $(TEST_SYSTEM_MEMORY_OUT)
+	cat $(TEST_MEMORY_OUT)
+	cat $(TEST_SYSTEM_MEMORY_OUT)
+
+test-system: build-server
+	python3 ./tests/system/test.py > $(TEST_SYSTEM_OUT)
+	cat $(TEST_SYSTEM_OUT)
 
 server: $(SERVER_OBJ_FILES)
 	$(CC) $(CFLAGS) $^ -o $@ $(CFLAGS_END)
@@ -56,3 +77,4 @@ include $(wildcard *.d)
 clean:
 	rm -rf $(BUILD_DIR)
 	rm -rf $(TEST_BUILD_DIR)
+	rm -rf *.out

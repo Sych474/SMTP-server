@@ -23,6 +23,7 @@ void maildir_get_dir_test_local() {
 
     // Finalize
     address_free(address);
+    string_free(str);
     string_free(base_mail_dir);
     string_free(final_dir);
     free(res);

@@ -45,7 +45,7 @@
 /* START === USER HEADERS === DO NOT CHANGE THIS COMMENT */
 #include <stdlib.h>
 
-#include "../fsm_handlers.h"
+#include "fsm_handlers.h"
 /* END   === USER HEADERS === DO NOT CHANGE THIS COMMENT */
 
 #ifndef NULL
@@ -100,7 +100,7 @@ server_fsm_trans_table[ SERVER_FSM_STATE_CT ][ SERVER_FSM_EVENT_CT ] = {
     { SERVER_FSM_ST_INVALID, SERVER_FSM_TR_INVALID }, /* EVT:  CMD_VRFY */
     { SERVER_FSM_ST_INVALID, SERVER_FSM_TR_INVALID }, /* EVT:  CMD_QUIT */
     { SERVER_FSM_ST_INVALID, SERVER_FSM_TR_INVALID }, /* EVT:  MAIL_END */
-    { SERVER_FSM_ST_DONE, SERVER_FSM_TR_LOST },     /* EVT:  CON_LOST */
+    { SERVER_FSM_ST_INVALID, SERVER_FSM_TR_INVALID }, /* EVT:  CON_LOST */
     { SERVER_FSM_ST_INVALID, SERVER_FSM_TR_INVALID }, /* EVT:  TIMEOUT */
     { SERVER_FSM_ST_INVALID, SERVER_FSM_TR_INVALID }, /* EVT:  CON_CLOSE */
     { SERVER_FSM_ST_INVALID, SERVER_FSM_TR_INVALID }, /* EVT:  SYNTAX_ERROR */
@@ -115,7 +115,7 @@ server_fsm_trans_table[ SERVER_FSM_STATE_CT ][ SERVER_FSM_EVENT_CT ] = {
     { SERVER_FSM_ST_INVALID, SERVER_FSM_TR_INVALID }, /* EVT:  CMD_MAIL */
     { SERVER_FSM_ST_INVALID, SERVER_FSM_TR_INVALID }, /* EVT:  CMD_RCPT */
     { SERVER_FSM_ST_INVALID, SERVER_FSM_TR_INVALID }, /* EVT:  CMD_DATA */
-    { SERVER_FSM_ST_HELLO, SERVER_FSM_TR_RSET },    /* EVT:  CMD_RSET */
+    { SERVER_FSM_ST_CREATED, SERVER_FSM_TR_RSET },  /* EVT:  CMD_RSET */
     { SERVER_FSM_ST_CREATED, SERVER_FSM_TR_VRFY },  /* EVT:  CMD_VRFY */
     { SERVER_FSM_ST_QUIT, SERVER_FSM_TR_QUIT },     /* EVT:  CMD_QUIT */
     { SERVER_FSM_ST_INVALID, SERVER_FSM_TR_INVALID }, /* EVT:  MAIL_END */
@@ -134,7 +134,7 @@ server_fsm_trans_table[ SERVER_FSM_STATE_CT ][ SERVER_FSM_EVENT_CT ] = {
     { SERVER_FSM_ST_MAIL_FROM, SERVER_FSM_TR_MAIL }, /* EVT:  CMD_MAIL */
     { SERVER_FSM_ST_INVALID, SERVER_FSM_TR_INVALID }, /* EVT:  CMD_RCPT */
     { SERVER_FSM_ST_INVALID, SERVER_FSM_TR_INVALID }, /* EVT:  CMD_DATA */
-    { SERVER_FSM_ST_HELLO, SERVER_FSM_TR_RSET },    /* EVT:  CMD_RSET */
+    { SERVER_FSM_ST_CREATED, SERVER_FSM_TR_RSET },  /* EVT:  CMD_RSET */
     { SERVER_FSM_ST_HELLO, SERVER_FSM_TR_VRFY },    /* EVT:  CMD_VRFY */
     { SERVER_FSM_ST_QUIT, SERVER_FSM_TR_QUIT },     /* EVT:  CMD_QUIT */
     { SERVER_FSM_ST_INVALID, SERVER_FSM_TR_INVALID }, /* EVT:  MAIL_END */
@@ -153,7 +153,7 @@ server_fsm_trans_table[ SERVER_FSM_STATE_CT ][ SERVER_FSM_EVENT_CT ] = {
     { SERVER_FSM_ST_INVALID, SERVER_FSM_TR_INVALID }, /* EVT:  CMD_MAIL */
     { SERVER_FSM_ST_RCPT_TO, SERVER_FSM_TR_RCPT },  /* EVT:  CMD_RCPT */
     { SERVER_FSM_ST_INVALID, SERVER_FSM_TR_INVALID }, /* EVT:  CMD_DATA */
-    { SERVER_FSM_ST_HELLO, SERVER_FSM_TR_RSET },    /* EVT:  CMD_RSET */
+    { SERVER_FSM_ST_CREATED, SERVER_FSM_TR_RSET },  /* EVT:  CMD_RSET */
     { SERVER_FSM_ST_MAIL_FROM, SERVER_FSM_TR_VRFY }, /* EVT:  CMD_VRFY */
     { SERVER_FSM_ST_QUIT, SERVER_FSM_TR_QUIT },     /* EVT:  CMD_QUIT */
     { SERVER_FSM_ST_INVALID, SERVER_FSM_TR_INVALID }, /* EVT:  MAIL_END */
@@ -172,7 +172,7 @@ server_fsm_trans_table[ SERVER_FSM_STATE_CT ][ SERVER_FSM_EVENT_CT ] = {
     { SERVER_FSM_ST_INVALID, SERVER_FSM_TR_INVALID }, /* EVT:  CMD_MAIL */
     { SERVER_FSM_ST_RCPT_TO, SERVER_FSM_TR_RCPT },  /* EVT:  CMD_RCPT */
     { SERVER_FSM_ST_DATA, SERVER_FSM_TR_DATA },     /* EVT:  CMD_DATA */
-    { SERVER_FSM_ST_HELLO, SERVER_FSM_TR_RSET },    /* EVT:  CMD_RSET */
+    { SERVER_FSM_ST_CREATED, SERVER_FSM_TR_RSET },  /* EVT:  CMD_RSET */
     { SERVER_FSM_ST_RCPT_TO, SERVER_FSM_TR_VRFY },  /* EVT:  CMD_VRFY */
     { SERVER_FSM_ST_QUIT, SERVER_FSM_TR_QUIT },     /* EVT:  CMD_QUIT */
     { SERVER_FSM_ST_INVALID, SERVER_FSM_TR_INVALID }, /* EVT:  MAIL_END */
@@ -214,7 +214,7 @@ server_fsm_trans_table[ SERVER_FSM_STATE_CT ][ SERVER_FSM_EVENT_CT ] = {
     { SERVER_FSM_ST_INVALID, SERVER_FSM_TR_INVALID }, /* EVT:  CMD_VRFY */
     { SERVER_FSM_ST_INVALID, SERVER_FSM_TR_INVALID }, /* EVT:  CMD_QUIT */
     { SERVER_FSM_ST_INVALID, SERVER_FSM_TR_INVALID }, /* EVT:  MAIL_END */
-    { SERVER_FSM_ST_DONE, SERVER_FSM_TR_LOST },     /* EVT:  CON_LOST */
+    { SERVER_FSM_ST_INVALID, SERVER_FSM_TR_INVALID }, /* EVT:  CON_LOST */
     { SERVER_FSM_ST_INVALID, SERVER_FSM_TR_INVALID }, /* EVT:  TIMEOUT */
     { SERVER_FSM_ST_DONE, SERVER_FSM_TR_CLOSE },    /* EVT:  CON_CLOSE */
     { SERVER_FSM_ST_INVALID, SERVER_FSM_TR_INVALID }, /* EVT:  SYNTAX_ERROR */
@@ -233,7 +233,7 @@ server_fsm_trans_table[ SERVER_FSM_STATE_CT ][ SERVER_FSM_EVENT_CT ] = {
     { SERVER_FSM_ST_INVALID, SERVER_FSM_TR_INVALID }, /* EVT:  CMD_VRFY */
     { SERVER_FSM_ST_INVALID, SERVER_FSM_TR_INVALID }, /* EVT:  CMD_QUIT */
     { SERVER_FSM_ST_INVALID, SERVER_FSM_TR_INVALID }, /* EVT:  MAIL_END */
-    { SERVER_FSM_ST_DONE, SERVER_FSM_TR_LOST },     /* EVT:  CON_LOST */
+    { SERVER_FSM_ST_INVALID, SERVER_FSM_TR_INVALID }, /* EVT:  CON_LOST */
     { SERVER_FSM_ST_INVALID, SERVER_FSM_TR_INVALID }, /* EVT:  TIMEOUT */
     { SERVER_FSM_ST_DONE, SERVER_FSM_TR_CLOSE },    /* EVT:  CON_CLOSE */
     { SERVER_FSM_ST_INVALID, SERVER_FSM_TR_INVALID }, /* EVT:  SYNTAX_ERROR */
@@ -319,6 +319,7 @@ server_fsm_step(
     te_server_fsm_state server_fsm_state,
     te_server_fsm_event trans_evt,
     void *server,
+    int client_id,
     void *data_str )
 {
     te_server_fsm_state nxtSt;
@@ -345,112 +346,112 @@ server_fsm_step(
     switch (trans) {
     case SERVER_FSM_TR_ACCEPTED:
         /* START == ACCEPTED == DO NOT CHANGE THIS COMMENT */
-        nxtSt = fsm_handle_accepted(server, nxtSt);
+        nxtSt = fsm_handle_accepted(server, client_id, nxtSt);
         /* END   == ACCEPTED == DO NOT CHANGE THIS COMMENT */
         break;
 
 
     case SERVER_FSM_TR_CLOSE:
         /* START == CLOSE == DO NOT CHANGE THIS COMMENT */
-        nxtSt = fsm_handle_close(server, nxtSt);
+        nxtSt = fsm_handle_close(server, client_id, nxtSt);
         /* END   == CLOSE == DO NOT CHANGE THIS COMMENT */
         break;
 
 
     case SERVER_FSM_TR_CMD_ERROR:
         /* START == CMD_ERROR == DO NOT CHANGE THIS COMMENT */
-        nxtSt = fsm_handle_cmd_error(server, nxtSt);
+        nxtSt = fsm_handle_cmd_error(server, client_id, nxtSt);
         /* END   == CMD_ERROR == DO NOT CHANGE THIS COMMENT */
         break;
 
 
     case SERVER_FSM_TR_DATA:
         /* START == DATA == DO NOT CHANGE THIS COMMENT */
-        nxtSt = fsm_handle_data(server, nxtSt);
+        nxtSt = fsm_handle_data(server, client_id, nxtSt);
         /* END   == DATA == DO NOT CHANGE THIS COMMENT */
         break;
 
 
     case SERVER_FSM_TR_EHLO:
         /* START == EHLO == DO NOT CHANGE THIS COMMENT */
-        nxtSt = fsm_handle_ehlo(server, data_str, nxtSt);
+        nxtSt = fsm_handle_ehlo(server, client_id, data_str, nxtSt);
         /* END   == EHLO == DO NOT CHANGE THIS COMMENT */
         break;
 
 
     case SERVER_FSM_TR_HELO:
         /* START == HELO == DO NOT CHANGE THIS COMMENT */
-        nxtSt = fsm_handle_helo(server, data_str, nxtSt);
+        nxtSt = fsm_handle_helo(server, client_id, data_str, nxtSt);
         /* END   == HELO == DO NOT CHANGE THIS COMMENT */
         break;
 
 
     case SERVER_FSM_TR_INVALID:
         /* START == INVALID == DO NOT CHANGE THIS COMMENT */
-        nxtSt = fsm_handle_invalid(server, nxtSt);
+        nxtSt = fsm_handle_invalid(server, client_id, nxtSt);
         /* END   == INVALID == DO NOT CHANGE THIS COMMENT */
         break;
 
 
     case SERVER_FSM_TR_LOST:
         /* START == LOST == DO NOT CHANGE THIS COMMENT */
-        nxtSt = fsm_handle_lost(server, nxtSt);
+        nxtSt = fsm_handle_lost(server, client_id, nxtSt);
         /* END   == LOST == DO NOT CHANGE THIS COMMENT */
         break;
 
 
     case SERVER_FSM_TR_MAIL:
         /* START == MAIL == DO NOT CHANGE THIS COMMENT */
-        nxtSt = fsm_handle_mail(server, data_str, nxtSt);
+        nxtSt = fsm_handle_mail(server, client_id, data_str, nxtSt);
         /* END   == MAIL == DO NOT CHANGE THIS COMMENT */
         break;
 
 
     case SERVER_FSM_TR_MAIL_RECEIVED:
         /* START == MAIL_RECEIVED == DO NOT CHANGE THIS COMMENT */
-        nxtSt = fsm_handle_mail_end(server, nxtSt);
+        nxtSt = fsm_handle_mail_end(server, client_id, nxtSt);
         /* END   == MAIL_RECEIVED == DO NOT CHANGE THIS COMMENT */
         break;
 
 
     case SERVER_FSM_TR_QUIT:
         /* START == QUIT == DO NOT CHANGE THIS COMMENT */
-        nxtSt = fsm_handle_quit(server, nxtSt);
+        nxtSt = fsm_handle_quit(server, client_id, nxtSt);
         /* END   == QUIT == DO NOT CHANGE THIS COMMENT */
         break;
 
 
     case SERVER_FSM_TR_RCPT:
         /* START == RCPT == DO NOT CHANGE THIS COMMENT */
-        nxtSt = fsm_handle_rcpt(server, data_str, nxtSt);
+        nxtSt = fsm_handle_rcpt(server, client_id, data_str, nxtSt);
         /* END   == RCPT == DO NOT CHANGE THIS COMMENT */
         break;
 
 
     case SERVER_FSM_TR_RSET:
         /* START == RSET == DO NOT CHANGE THIS COMMENT */
-        nxtSt = fsm_handle_rset(server, nxtSt);
+        nxtSt = fsm_handle_rset(server, client_id, nxtSt);
         /* END   == RSET == DO NOT CHANGE THIS COMMENT */
         break;
 
 
     case SERVER_FSM_TR_SYNTAX_ERROR:
         /* START == SYNTAX_ERROR == DO NOT CHANGE THIS COMMENT */
-        nxtSt = fsm_handle_syntax_error(server, nxtSt);
+        nxtSt = fsm_handle_syntax_error(server, client_id, nxtSt);
         /* END   == SYNTAX_ERROR == DO NOT CHANGE THIS COMMENT */
         break;
 
 
     case SERVER_FSM_TR_TIMEOUT:
         /* START == TIMEOUT == DO NOT CHANGE THIS COMMENT */
-        nxtSt = fsm_handle_timeout(server, nxtSt);
+        nxtSt = fsm_handle_timeout(server, client_id, nxtSt);
         /* END   == TIMEOUT == DO NOT CHANGE THIS COMMENT */
         break;
 
 
     case SERVER_FSM_TR_VRFY:
         /* START == VRFY == DO NOT CHANGE THIS COMMENT */
-        nxtSt = fsm_handle_vrfy(server, nxtSt);
+        nxtSt = fsm_handle_vrfy(server, client_id, nxtSt);
         /* END   == VRFY == DO NOT CHANGE THIS COMMENT */
         break;
 

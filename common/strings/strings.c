@@ -59,7 +59,7 @@ void string_free(string_t *str) {
 }
 
 int string_concat(string_t *str, char *addition, size_t addition_len) {
-    size_t new_len = strlen(str->str) + addition_len;
+    size_t new_len = strlen(str->str) + addition_len + 1;
 
     if (string_expand_memory_to(str, new_len) < 0)
         return -1;
@@ -74,7 +74,7 @@ void string_begining_trim(string_t *str, size_t trim) {
 }
 
 int string_set(string_t *dst, char *src, size_t len, size_t offset) {
-    if (string_expand_memory_to(dst, len) < 0)
+    if (string_expand_memory_to(dst, len + 1) < 0)
         return -1;
 
     string_clear(dst);

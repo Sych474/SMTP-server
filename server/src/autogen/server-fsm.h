@@ -89,6 +89,7 @@ server_fsm_step(
     te_server_fsm_state server_fsm_state,
     te_server_fsm_event trans_evt,
     void *server,
+    int client_id,
     void *data_str );
 
 #endif /* AUTOFSM_SERVER_FSM_H_GUARD */
