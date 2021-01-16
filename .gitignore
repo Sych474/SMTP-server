@@ -58,7 +58,6 @@ CUnit-Results.xml
 
 # tex
 *.log
-report.pdf
 *.out
 *.gz
 *.toc
