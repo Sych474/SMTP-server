@@ -60,9 +60,10 @@ server_parser_result_t *server_parser_parse(server_parser_t *parser, char* msg, 
                 // get text after cmd
                 pcre_get_substring(msg, ovector, res, 1, &(text));
                 int len = ovector[3] - ovector[2];
-                result->data = string_create(text, len);
-                if (text)
+                if (text) {
+                    result->data = string_create(text, len);
                     pcre_free_substring(text);
+                }
                 if (!result->data) {
                     free(result);
                     return NULL;

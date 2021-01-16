@@ -46,8 +46,9 @@ build-tests:
 	make test --directory=$(TEST_BUILD_DIR) --makefile=../Makefile
 
 test-unit: build-tests
-	./test_build/test > $(TEST_UNIT_OUT)
-	cat $(TEST_UNIT_OUT)
+	./test_build/test 
+	#> $(TEST_UNIT_OUT)
+	#cat $(TEST_UNIT_OUT)
 
 test-style:
 	$(STYLE_CHECKER) $(STYLE_CHECKER_ARGS) $(STYLE_FILES) > $(TEST_STYLE_OUT)

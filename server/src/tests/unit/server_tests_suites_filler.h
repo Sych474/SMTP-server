@@ -7,6 +7,8 @@
 #include <CUnit/Basic.h>
 #include <CUnit/Automated.h>
 
+#include "parser_test.h"
+
 int fill_server_test_suites();
 
 #endif  // SERVER_SRC_TESTS_UNIT_SERVER_TESTS_SUITES_FILLER_H_
