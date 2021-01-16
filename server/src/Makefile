@@ -18,8 +18,8 @@ COMMON_SRC_DIRS		:=  logger strings mail address tests privileges process_info
 COMMON_SRC_DIRS		:=  $(addprefix $(COMMON_DIR),$(COMMON_SRC_DIRS))
 TEST_DIRS     		:= $(addprefix ../, ./tests/unit $(addprefix $(COMMON_DIR), tests)) #нужны для исключения из обычной сборки
 
-SRC_DIRS  	 		:= . ./tests/unit ./config  ./autogen $(COMMON_SRC_DIRS)
-STYLE_DIRS			:= $(filter-out ./autogen, $(SRC_DIRS))
+SRC_DIRS  	 		:= . ./tests/unit config  autogen fsm_handlers client_info parser $(COMMON_SRC_DIRS)
+STYLE_DIRS			:= $(filter-out autogen parser, $(SRC_DIRS))
 STYLE_FILES 		:= $(wildcard $(addsuffix /*.c, $(STYLE_DIRS))) $(wildcard $(addsuffix /*.h, $(STYLE_DIRS)))
 
 SRC_DIRS     		:= $(addprefix ../,$(SRC_DIRS)) # потому что будем собирать в /build
@@ -46,9 +46,8 @@ build-tests:
 	make test --directory=$(TEST_BUILD_DIR) --makefile=../Makefile
 
 test-unit: build-tests
-	./test_build/test 
-	#> $(TEST_UNIT_OUT)
-	#cat $(TEST_UNIT_OUT)
+	./test_build/test > $(TEST_UNIT_OUT)
+	cat $(TEST_UNIT_OUT)
 
 test-style:
 	$(STYLE_CHECKER) $(STYLE_CHECKER_ARGS) $(STYLE_FILES) > $(TEST_STYLE_OUT)

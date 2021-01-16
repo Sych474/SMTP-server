@@ -1,5 +1,5 @@
-#ifndef SERVER_SRC_CLIENT_INFO_H_
-#define SERVER_SRC_CLIENT_INFO_H_
+#ifndef SERVER_SRC_CLIENT_INFO_CLIENT_INFO_H_
+#define SERVER_SRC_CLIENT_INFO_CLIENT_INFO_H_
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -30,4 +30,4 @@ int client_info_set_output_buf(client_info_t *client_info, char *output, size_t 
 int client_info_concat_input_buf(client_info_t *client_info, char *input, size_t len);
 void client_info_trim_input_buf(client_info_t *client_info, size_t trim);
 
-#endif  // SERVER_SRC_CLIENT_INFO_H_
+#endif  // SERVER_SRC_CLIENT_INFO_CLIENT_INFO_H_

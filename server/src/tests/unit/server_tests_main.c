@@ -11,7 +11,7 @@ int main(int argc, char *argv[]) {
 
     int res;
 
-    int res = fill_common_test_suites();
+    res = fill_common_test_suites();
     if (res) {
         perror("Error on filling common test suites!");
         return res;

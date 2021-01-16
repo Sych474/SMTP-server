@@ -137,7 +137,7 @@ void parser_rcpt_to_test() {
     char * data1[] = {"RCPT TO: sych@test.ru\r\n", "rcpt to: sych@test.ru\r\n", "RcPt TO:  sych@test.ru\r\n"};
     int cnt = 3;
 
-    test_with_data_cmd(cnt, data1, "sych@test.ru", SMTP_RCPT_CMD);
+    test_with_data_cmd(cnt, data1, " sych@test.ru", SMTP_RCPT_CMD);
 
     char * data2[] = {"RCPT TO: <a@b.c>\r\n", "rcpt to: <a@b.c>\r\n", "RcPt TO: <a@b.c>\r\n"};
     cnt = 3;

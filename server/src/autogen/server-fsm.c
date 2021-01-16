@@ -45,7 +45,7 @@
 /* START === USER HEADERS === DO NOT CHANGE THIS COMMENT */
 #include <stdlib.h>
 
-#include "../fsm_handlers.h"
+#include "fsm_handlers.h"
 /* END   === USER HEADERS === DO NOT CHANGE THIS COMMENT */
 
 #ifndef NULL
